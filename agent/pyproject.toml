@@ -1,0 +1,22 @@
+[project]
+name = "agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "accelerate>=1.12.0",
+    "langchain>=1.0.8",
+    "langchain-openai>=1.0.3",
+    "langgraph>=1.0.3",
+    "openai>=2.8.1",
+    "pillow>=12.0.0",
+    "protobuf>=4.25.0",
+    "pymupdf>=1.26.6",
+    "python-dotenv>=1.2.1",
+    "qwen-vl-utils>=0.0.14",
+    "sentencepiece>=0.2.0",
+    "torch>=2.9.1",
+    "torchvision>=0.24.1",
+    "transformers>=4.57.1",
+]
