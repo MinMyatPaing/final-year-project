@@ -1,0 +1,122 @@
+[
+  {
+    "date": "2025-08-20",
+    "description": "BALANCE BROUGHT FORWARD",
+    "amount": 177.57,
+    "balance": 177.57
+  },
+  {
+    "date": "2025-08-21",
+    "description": "CASH IN HSBC AUG21",
+    "amount": 750.0,
+    "balance": 177.57
+  },
+  {
+    "date": "2025-08-21",
+    "description": "CASH IN HSBC AUG21",
+    "amount": 1940.0,
+    "balance": 279.47
+  },
+  {
+    "date": "2025-08-22",
+    "description": "Min Paing",
+    "amount": 48.0,
+    "balance": 279.47
+  },
+  {
+    "date": "2025-08-23",
+    "description": "Monthly fee",
+    "amount": 500.0,
+    "balance": 669.66
+  },
+  {
+    "date": "2025-08-24",
+    "description": "Min Paing",
+    "amount": 300.0,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "New TongYi Superma",
+    "amount": 5.79,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "NYA*Oaka Vending U",
+    "amount": 1.4,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "TESCO STORES 2686",
+    "amount": 24.23,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "RANAIN LTD T/A BUN",
+    "amount": 9.99,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "LIDL GB HUDDERSFIE",
+    "amount": 3.59,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "New TongYi Superma",
+    "amount": 5.79,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "HUDDERSFIELD DISCO",
+    "amount": 3.9,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "A TO Z DISCOUNT ST",
+    "amount": 4.49,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "HUDDERSFIELD",
+    "amount": 1.7,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "UBR* PENDING.UBER.",
+    "amount": 13.55,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "TESCO STORES 2686",
+    "amount": 9.12,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "TRAINLINE",
+    "amount": 80.89,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "PAYPAL *ALIPAY UK",
+    "amount": 9.6,
+    "balance": 369.66
+  },
+  {
+    "date": "2025-08-26",
+    "description": "BALANCE CARRIED FORWARD",
+    "amount": 195.62,
+    "balance": 195.62
+  }
+]

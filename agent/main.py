@@ -1,229 +1,258 @@
 """
-Qwen2.5-VL for Bank Statement Extraction
-Works out-of-the-box without fine-tuning
-Better accuracy than Donut and NuExtract
+Bank Statement Transaction Extractor using LangGraph + NuExtract
+Much more reliable than LLM-based extraction
 """
 
-from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
-from qwen_vl_utils import process_vision_info
+from typing import TypedDict, List, Dict
+from langgraph.graph import StateGraph, END
 import torch
-from PIL import Image
-import fitz  # PyMuPDF
+from transformers import AutoProcessor, AutoModelForVision2Seq
+from qwen_vl_utils import process_vision_info
 import json
-import re
+import base64
+import fitz  # PyMuPDF - no poppler needed!
 
 
-class QwenBankStatementExtractor:
-    def __init__(self, model_name="Qwen/Qwen2-VL-7B-Instruct"):
-        """
-        Initialize Qwen2.5-VL model for bank statement extraction
+# Define the state structure
+class BankStatementState(TypedDict):
+    pdf_path: str
+    pdf_images: List[str]  # Base64 encoded images
+    transactions: List[Dict[str, str]]
+    error: str
 
-        Models:
-        - Qwen/Qwen2-VL-2B-Instruct (faster, fits 16GB easily)
-        - Qwen/Qwen2-VL-7B-Instruct (more accurate, recommended)
-        """
-        print(f"🔄 Loading Qwen model: {model_name}")
 
-        self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-            model_name, torch_dtype=torch.bfloat16, device_map="auto"
-        )
+# Global model and processor (load once)
+MODEL = None
+PROCESSOR = None
 
-        self.processor = AutoProcessor.from_pretrained(model_name)
 
-        print(f"✓ Model loaded on {self.model.device}")
+def initialize_model(state: BankStatementState) -> BankStatementState:
+    """Initialize NuExtract model (only once)"""
+    global MODEL, PROCESSOR
 
-    def extract_from_pdf(self, pdf_path):
-        """Extract transactions from bank statement PDF"""
-        print(f"📄 Processing: {pdf_path}")
+    if MODEL is None:
+        print("🔄 Loading NuExtract-2.0-2B model (first time only)...")
+        try:
+            model_name = "numind/NuExtract-2.0-2B"
 
-        # Convert PDF to images
-        pdf_document = fitz.open(pdf_path)
-        all_transactions = []
+            MODEL = AutoModelForVision2Seq.from_pretrained(
+                model_name,
+                trust_remote_code=True,
+                torch_dtype=torch.bfloat16,
+                device_map="auto",
+            )
 
+            PROCESSOR = AutoProcessor.from_pretrained(
+                model_name, trust_remote_code=True, padding_side="left", use_fast=True
+            )
+
+            print("✓ Model loaded successfully")
+        except Exception as e:
+            state["error"] = f"Error loading model: {str(e)}"
+            print(f"✗ {state['error']}")
+
+    return state
+
+
+def convert_pdf_to_images(state: BankStatementState) -> BankStatementState:
+    """Convert PDF pages to images using PyMuPDF (no poppler needed)"""
+    try:
+        print("🔄 Converting PDF to images...")
+
+        # Open PDF with PyMuPDF
+        pdf_document = fitz.open(state["pdf_path"])
+
+        base64_images = []
         for page_num in range(len(pdf_document)):
-            print(f"   Page {page_num + 1}/{len(pdf_document)}...", end=" ")
-
             # Render page to image
             page = pdf_document[page_num]
-            mat = fitz.Matrix(2.0, 2.0)  # 2x resolution
+
+            # Convert to pixmap (image) at 2x resolution for better OCR
+            mat = fitz.Matrix(2.0, 2.0)  # 2x zoom for better quality
             pix = page.get_pixmap(matrix=mat)
 
             # Convert to PIL Image
-            import io
+            img_data = pix.tobytes("jpeg")
 
-            img = Image.open(io.BytesIO(pix.tobytes("jpeg")))
-
-            # Extract transactions from this page
-            page_transactions = self.extract_from_image(img)
-            all_transactions.extend(page_transactions)
-
-            print(f"✓ {len(page_transactions)} transactions")
+            # Encode to base64
+            img_base64 = base64.b64encode(img_data).decode()
+            base64_images.append(img_base64)
 
         pdf_document.close()
 
-        print(f"\n✓ Total: {len(all_transactions)} transactions")
-        return all_transactions
+        state["pdf_images"] = base64_images
+        print(f"✓ Converted PDF to {len(base64_images)} images")
 
-    def extract_from_image(self, image):
-        """Extract transactions from a single image"""
+    except Exception as e:
+        state["error"] = f"Error converting PDF: {str(e)}"
+        print(f"✗ {state['error']}")
 
-        # Create detailed prompt for extraction
-        prompt = """Analyze this bank statement page and extract ALL transactions.
+    return state
 
-For each transaction, extract:
-- date: Transaction date (format as YYYY-MM-DD)
-- description: Full transaction description
-- type: One of: credit, debit, card_payment, direct_debit, cash_deposit, cash_withdrawal, transfer
-- amount: Transaction amount (positive for credits/deposits, negative for debits/withdrawals)
-- balance: Account balance after transaction (if shown)
 
-CRITICAL RULES:
-1. "CR" or "CASH IN" or "PIM" = credit (positive amount)
-2. "BP" or "DD" or "ATM" or "VIS" or ")))" = debit (negative amount)
-3. Multi-line transactions should be combined into one entry
-4. For dates like "21 Aug 25", convert to "2025-08-21"
-5. Remove commas from amounts (1,000.00 → 1000.00)
+def process_all_vision_info(messages, examples=None):
+    """Helper function from NuExtract docs"""
+    from qwen_vl_utils import fetch_image
 
-Return ONLY a JSON array, no other text:
-[
-  {"date": "2025-08-21", "description": "Cash deposit HSBC", "type": "cash_deposit", "amount": 750.00, "balance": 927.57},
-  {"date": "2025-08-21", "description": "Tesco Stores", "type": "card_payment", "amount": -34.20, "balance": 893.37}
-]"""
+    def extract_example_images(example_item):
+        if not example_item:
+            return []
+        examples_to_process = (
+            example_item if isinstance(example_item, list) else [example_item]
+        )
+        images = []
+        for example in examples_to_process:
+            if (
+                isinstance(example.get("input"), dict)
+                and example["input"].get("type") == "image"
+            ):
+                images.append(fetch_image(example["input"]))
+        return images
 
-        # Prepare messages
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": image},
-                    {"type": "text", "text": prompt},
-                ],
+    is_batch = messages and isinstance(messages[0], list)
+    messages_batch = messages if is_batch else [messages]
+    is_batch_examples = (
+        examples
+        and isinstance(examples, list)
+        and (isinstance(examples[0], list) or examples[0] is None)
+    )
+    examples_batch = (
+        examples
+        if is_batch_examples
+        else ([examples] if examples is not None else None)
+    )
+
+    all_images = []
+    for i, message_group in enumerate(messages_batch):
+        if examples and i < len(examples_batch):
+            input_example_images = extract_example_images(examples_batch[i])
+            all_images.extend(input_example_images)
+
+        input_message_images = process_vision_info(message_group)[0] or []
+        all_images.extend(input_message_images)
+
+    return all_images if all_images else None
+
+
+def extract_transactions_from_images(state: BankStatementState) -> BankStatementState:
+    """Extract transactions using NuExtract"""
+    if state.get("error"):
+        return state
+
+    try:
+        print("🔄 Extracting transactions with NuExtract...")
+
+        # Define the schema we want to extract
+        # Define the schema - SIMPLIFIED
+        template = {
+            "transactions": [
+                {
+                    "date": "date-time",
+                    "description": "string",
+                    "amount": "number",
+                    "balance": "number",
+                }
+            ]
+        }
+
+        all_transactions = []
+
+        # Process each page
+        for page_num, img_base64 in enumerate(state["pdf_images"], 1):
+            print(
+                f"   Processing page {page_num}/{len(state['pdf_images'])}...", end=" "
+            )
+
+            # Create image input
+            document = {
+                "type": "image",
+                "image": f"data:image/jpeg;base64,{img_base64}",
             }
-        ]
 
-        # Apply chat template
-        text = self.processor.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
+            messages = [{"role": "user", "content": [document]}]
 
-        # Process vision info - returns tuple (image_list, image_sizes)
-        vision_info = process_vision_info(messages)
+            text = PROCESSOR.tokenizer.apply_chat_template(
+                messages,
+                template=json.dumps(template, indent=2),
+                tokenize=False,
+                add_generation_prompt=True,
+            )
 
-        # Extract image list from tuple and ensure it's a list (not tuple)
-        if isinstance(vision_info, tuple):
-            image_list = vision_info[0]  # Extract image list from tuple
-            # Convert to list if it's still a tuple
-            if isinstance(image_list, tuple):
-                image_inputs = list(image_list)
-            elif isinstance(image_list, list):
-                image_inputs = image_list
-            else:
-                image_inputs = [image_list] if image_list is not None else None
-        elif isinstance(vision_info, list):
-            image_inputs = vision_info
-        else:
-            # If it's a single image or None, convert to list
-            image_inputs = [vision_info] if vision_info is not None else None
+            image_inputs = process_all_vision_info(messages)
 
-        # Final check: ensure image_inputs is a list or None (never a tuple)
-        if image_inputs is not None:
-            if isinstance(image_inputs, tuple):
-                image_inputs = list(image_inputs)
-            elif not isinstance(image_inputs, list):
-                image_inputs = [image_inputs]
+            inputs = PROCESSOR(
+                text=[text],
+                images=image_inputs,
+                padding=True,
+                return_tensors="pt",
+            ).to(MODEL.device)
 
-        # Prepare inputs - pass images as list or None
-        inputs = self.processor(
-            text=[text],
-            images=image_inputs if image_inputs else None,
-            padding=True,
-            return_tensors="pt",
-        ).to(self.model.device)
+            # Generate extraction
+            generation_config = {
+                "do_sample": False,
+                "num_beams": 1,
+                "max_new_tokens": 4096,
+            }
 
-        # Generate
-        generated_ids = self.model.generate(
-            **inputs,
-            max_new_tokens=4096,
-            temperature=0.1,  # Low temperature for structured output
-            do_sample=False,
-        )
+            generated_ids = MODEL.generate(**inputs, **generation_config)
 
-        # Decode
-        generated_ids_trimmed = [
-            out_ids[len(in_ids) :]
-            for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-        ]
+            generated_ids_trimmed = [
+                out_ids[len(in_ids) :]
+                for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+            ]
 
-        output_text = self.processor.batch_decode(
-            generated_ids_trimmed,
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=False,
-        )[0]
+            output_text = PROCESSOR.batch_decode(
+                generated_ids_trimmed,
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=False,
+            )[0]
 
-        # Parse JSON
-        transactions = self._parse_output(output_text)
-        return transactions
+            # Parse JSON output
+            try:
+                page_data = json.loads(output_text)
+                page_transactions = page_data.get("transactions", [])
+                all_transactions.extend(page_transactions)
+                print(f"✓ Found {len(page_transactions)} transactions")
+            except json.JSONDecodeError as e:
+                print(f"⚠ JSON parse error on page {page_num}")
+                continue
 
-    def _parse_output(self, output_text):
-        """Parse model output into structured transactions"""
-        try:
-            # Remove markdown code blocks if present
-            if "```" in output_text:
-                match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", output_text)
-                if match:
-                    output_text = match.group(1)
+        # Clean and validate transactions - SIMPLIFIED
+        cleaned_transactions = []
+        for t in all_transactions:
+            if t.get("date") and t.get("description"):
+                cleaned_transactions.append(
+                    {
+                        "date": str(t.get("date", "")),
+                        "description": str(t.get("description", "")),
+                        "amount": float(t.get("amount", 0)) if t.get("amount") else 0.0,
+                        "balance": (
+                            float(t.get("balance", 0)) if t.get("balance") else None
+                        ),
+                    }
+                )
 
-            # Find JSON array
-            start_idx = output_text.find("[")
-            end_idx = output_text.rfind("]")
+        state["transactions"] = cleaned_transactions
+        print(f"✓ Total extracted: {len(cleaned_transactions)} transactions")
 
-            if start_idx != -1 and end_idx != -1:
-                json_str = output_text[start_idx : end_idx + 1]
-                transactions = json.loads(json_str)
+    except Exception as e:
+        state["error"] = f"Error extracting transactions: {str(e)}"
+        print(f"✗ {state['error']}")
+        import traceback
 
-                # Validate and clean
-                cleaned = []
-                for t in transactions:
-                    if isinstance(t, dict) and "date" in t and "description" in t:
-                        cleaned.append(
-                            {
-                                "date": t.get("date", ""),
-                                "description": t.get("description", ""),
-                                "type": t.get("type", "unknown"),
-                                "amount": float(t.get("amount", 0)),
-                                "balance": (
-                                    float(t.get("balance", 0))
-                                    if t.get("balance")
-                                    else None
-                                ),
-                            }
-                        )
+        traceback.print_exc()
 
-                return cleaned
-
-            return []
-
-        except json.JSONDecodeError as e:
-            print(f"⚠ JSON parse error: {e}")
-            return []
-        except Exception as e:
-            print(f"⚠ Parse error: {e}")
-            return []
+    return state
 
 
-# ==============================================================================
-# USAGE
-# ==============================================================================
+def format_output(state: BankStatementState) -> BankStatementState:
+    """Format and display the transactions"""
+    if state.get("error") and not state.get("transactions"):
+        print(f"\n❌ Error: {state['error']}")
+        return state
 
-if __name__ == "__main__":
-    # Initialize extractor
-    # Use 2B for faster inference, 7B for better accuracy
-    extractor = QwenBankStatementExtractor("Qwen/Qwen2-VL-2B-Instruct")
+    transactions = state["transactions"]
 
-    # Extract transactions
-    transactions = extractor.extract_from_pdf("./assets/sample_bank_statement.pdf")
-
-    # Display results
     print("\n" + "=" * 80)
     print("EXTRACTED TRANSACTIONS")
     print("=" * 80)
@@ -231,8 +260,8 @@ if __name__ == "__main__":
     total_in = 0
     total_out = 0
 
-    for i, t in enumerate(transactions, 1):
-        amount = t["amount"]
+    for i, transaction in enumerate(transactions, 1):
+        amount = transaction.get("amount", 0)
         if amount >= 0:
             total_in += amount
             amount_str = f"+£{amount:.2f}"
@@ -240,12 +269,12 @@ if __name__ == "__main__":
             total_out += abs(amount)
             amount_str = f"-£{abs(amount):.2f}"
 
-        print(f"\n{i}. {t['date']}")
-        print(f"   {t['description']}")
-        print(f"   Type: {t['type']}")
+        print(f"\n{i}. {transaction.get('date', 'N/A')}")
+        print(f"   {transaction.get('description', 'N/A')}")
+        print(f"   Type: {transaction.get('type', 'N/A')}")
         print(f"   Amount: {amount_str}", end="")
-        if t["balance"]:
-            print(f" | Balance: £{t['balance']:.2f}")
+        if transaction.get("balance"):
+            print(f" | Balance: £{transaction.get('balance'):.2f}")
         else:
             print()
 
@@ -256,7 +285,63 @@ if __name__ == "__main__":
     print(f"Net: £{(total_in - total_out):.2f}")
     print("=" * 80)
 
-    # Save to JSON
-    with open("transactions.json", "w") as f:
-        json.dump(transactions, f, indent=2)
-    print("\n💾 Saved to transactions.json")
+    return state
+
+
+# Build the LangGraph workflow
+def create_workflow():
+    """Create the LangGraph workflow"""
+    workflow = StateGraph(BankStatementState)
+
+    # Add nodes
+    workflow.add_node("initialize_model", initialize_model)
+    workflow.add_node("convert_pdf", convert_pdf_to_images)
+    workflow.add_node("extract_transactions", extract_transactions_from_images)
+    workflow.add_node("format_output", format_output)
+
+    # Define the flow
+    workflow.set_entry_point("initialize_model")
+    workflow.add_edge("initialize_model", "convert_pdf")
+    workflow.add_edge("convert_pdf", "extract_transactions")
+    workflow.add_edge("extract_transactions", "format_output")
+    workflow.add_edge("format_output", END)
+
+    return workflow.compile()
+
+
+def process_bank_statement(pdf_path: str) -> List[Dict[str, str]]:
+    """Main function to process a bank statement PDF"""
+    print(f"\n🏦 Processing bank statement: {pdf_path}")
+    print("-" * 80)
+
+    # Create the workflow
+    app = create_workflow()
+
+    # Run the workflow
+    initial_state = {
+        "pdf_path": pdf_path,
+        "pdf_images": [],
+        "transactions": [],
+        "error": "",
+    }
+
+    final_state = app.invoke(initial_state)
+
+    return final_state["transactions"]
+
+
+# Example usage
+if __name__ == "__main__":
+    # Replace with your PDF file path
+    pdf_file = "./assets/sample_bank_statement.pdf"
+
+    transactions = process_bank_statement(pdf_file)
+
+    # Export to JSON file
+    if transactions:
+        output_file = "transactions.json"
+        with open(output_file, "w") as f:
+            json.dump(transactions, f, indent=2)
+        print(f"\n💾 Transactions saved to {output_file}")
+
+    print(f"\n📊 Returned {len(transactions)} transactions as Python list")
