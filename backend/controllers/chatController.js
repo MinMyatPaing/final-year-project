@@ -5,8 +5,10 @@ const AGENT_API_URL = process.env.AGENT_API_URL || 'http://localhost:8000';
 /**
  * POST /api/chat/message
  * Forwards the user's message to the Python LangGraph agent.
- * Uses the authenticated user's ID as the session_id so each user
- * has their own conversation memory in the agent.
+ *
+ * session_id = raw MongoDB user _id (no prefix).
+ * This MUST match the Pinecone namespace used by the vector-store upsert
+ * in transactionController, which also uses req.user.id.toString().
  */
 exports.sendMessage = async (req, res) => {
   const { message } = req.body;
@@ -15,8 +17,9 @@ exports.sendMessage = async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  // Use the authenticated user's ID as the LangGraph thread ID
-  const sessionId = `user_${req.user.id}`;
+  // Use the raw MongoDB ObjectId string so it matches the Pinecone namespace
+  // that transactionController writes to (userId.toString()).
+  const sessionId = req.user.id.toString();
 
   try {
     const response = await axios.post(

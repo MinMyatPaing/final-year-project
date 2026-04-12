@@ -1,4 +1,4 @@
-import { View, ScrollView, StatusBar } from 'react-native';
+import { View, ScrollView, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../../store/authSlice';
@@ -11,7 +11,9 @@ import MenuSection from '../../../components/profile/MenuSection';
 import LogoutButton from '../../../components/profile/LogoutButton';
 
 export default function Profile() {
-  const { user, transactions } = useSelector((state) => state.auth);
+  // BUG FIX: transactions live in state.transaction, NOT state.auth
+  const { user } = useSelector((state) => state.auth);
+  const { transactions } = useSelector((state) => state.transaction);
   const dispatch = useDispatch();
 
   const displayName = user?.name || user?.email?.split('@')[0] || 'Student';
@@ -26,16 +28,31 @@ export default function Profile() {
     .filter((t) => parseFloat(t.amount) < 0)
     .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount)), 0);
 
-  const txCount = (transactions || []).length;
+  const txCount   = (transactions || []).length;
   const categories = new Set((transactions || []).map((t) => t.category)).size;
 
-  const handleLogout = async () => {
-    try {
-      await apiClient.post('/api/auth/logout');
-    } catch (_) {
-      // ignore network errors — local logout still proceeds
-    }
-    dispatch(logoutUser());
+  // ─── Logout with confirmation ─────────────────────────────────────────────
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiClient.post('/api/auth/logout');
+            } catch (_) {
+              // ignore network errors — local logout still proceeds
+            }
+            dispatch(logoutUser());
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (

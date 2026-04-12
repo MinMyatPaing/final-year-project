@@ -1,6 +1,6 @@
 """
 Chat Flow — LangGraph ReAct Agent
-Claude Sonnet 4.6 with Tavily + Perplexity web search and per-user conversation memory.
+Claude Sonnet with Tavily + Perplexity web search and per-user conversation memory.
 """
 
 import os
@@ -26,22 +26,31 @@ _current_user_id: ContextVar[str] = ContextVar("current_user_id", default="")
 
 # ─── System Prompt ────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are StudyBudget AI, a helpful and friendly financial assistant for university students in the UK.
+SYSTEM_PROMPT = """You are StudyBudget AI, a helpful and friendly assistant for university students in the UK.
 
-Your role is to help students:
-- Understand and analyse their spending habits and bank transactions
-- Set realistic budgets and track spending goals
-- Find student discounts, deals, and money-saving opportunities
-- Explain financial concepts in simple, clear language
-- Give practical, actionable saving advice tailored to student life
+Your primary role is helping students manage their finances, but you are a general-purpose assistant
+who can answer any question a UK student might have.
+
+Your financial capabilities include:
+- Analysing personal spending habits and bank transactions
+- Setting realistic budgets and tracking spending goals
+- Finding student discounts, deals, and money-saving opportunities
+- Explaining financial concepts in simple, clear language
+- Giving practical, actionable saving advice tailored to student life
+
+General assistance:
+- You can help with questions about UK life, local information, shops, transport, food, and services
+- You can answer factual questions, help plan trips, find local businesses, and more
+- Use web_search freely whenever a question requires current or local information
 
 Guidelines:
-- Always use British English and GBP (£) for amounts
+- Always use British English and GBP (£) for financial amounts
 - Be encouraging and non-judgmental about spending
 - Keep responses concise but informative
-- When searching the web, prioritise UK-relevant results
-- For financial advice, always note you are an AI assistant and suggest consulting a professional for major decisions
+- Use web_search whenever you need up-to-date facts, local UK information, or anything you are not certain about — do NOT limit web searches to financial topics
+- For financial advice, note you are an AI assistant and suggest consulting a professional for major decisions
 - Remember the conversation history and refer back to it when relevant
+- When a user asks about their own spending or transactions, ALWAYS call search_my_transactions first
 """
 
 # ─── LLM ─────────────────────────────────────────────────────────────────────
@@ -57,15 +66,18 @@ llm = ChatAnthropic(
 
 # 1. Tavily Web Search
 tavily_search = TavilySearchResults(
-    max_results=4,
+    max_results=5,
     search_depth="advanced",
     include_answer=True,
     include_raw_content=False,
     name="web_search",
     description=(
-        "Search the web for current information about student finance, deals, "
-        "discounts, budgeting tips, and financial news. Use this for up-to-date "
-        "information or when you need to find specific facts."
+        "Search the web for any up-to-date or local information. "
+        "Use this tool freely for: current events, local UK facts (shops, restaurants, "
+        "transport, services, locations), student discounts and deals, financial news, "
+        "general knowledge questions, or anything you are not certain about. "
+        "Do NOT limit searches to financial topics — answer any question where a "
+        "web search would give a better or more accurate answer."
     ),
 )
 
@@ -75,13 +87,13 @@ tavily_search = TavilySearchResults(
 def search_my_transactions(query: str) -> str:
     """
     Search the user's personal transaction history using semantic similarity.
-    Use this whenever the user asks about their own spending, purchases, or finances —
-    for example:
+    ALWAYS call this tool first whenever the user asks about their own spending,
+    purchases, income, or finances. For example:
       - "How much did I spend on food last month?"
       - "Show me my Uber transactions"
       - "What did I buy at Amazon recently?"
       - "What's my total entertainment spending?"
-    Always call this tool BEFORE answering any question about the user's transactions.
+      - "How much money did I receive?"
 
     Args:
         query: Natural language description of what transactions to find.
@@ -106,8 +118,8 @@ def search_my_transactions(query: str) -> str:
 def perplexity_search(query: str) -> str:
     """
     Perform a deep web search using Perplexity AI for comprehensive,
-    well-sourced answers. Best used for complex financial questions or
-    when you need a detailed explanation with citations.
+    well-sourced answers. Best used for complex questions or when you need
+    a detailed explanation with citations. Use web_search first for simpler queries.
 
     Args:
         query: The search query or question to research
@@ -115,9 +127,9 @@ def perplexity_search(query: str) -> str:
     Returns:
         A detailed answer with sources from Perplexity
     """
-    api_key = os.getenv("PERPLEXITY_API_KEY", "pplx-placeholder-key")
+    api_key = os.getenv("PERPLEXITY_API_KEY", "")
 
-    if api_key == "pplx-placeholder-key":
+    if not api_key:
         return (
             "[Perplexity search unavailable — PERPLEXITY_API_KEY not set. "
             "Falling back to knowledge base.] "
@@ -185,11 +197,12 @@ async def chat(message: str, session_id: str) -> str:
     Send a message to the StudyBudget AI agent and return its response.
 
     Each unique session_id gets its own conversation thread with memory.
-    Use the authenticated user's ID as session_id for per-user persistence.
+    Use the authenticated user's MongoDB ObjectId as session_id so it matches
+    the Pinecone namespace used for vector storage.
 
     Args:
         message:    The user's message text.
-        session_id: Unique identifier for this conversation (e.g. "user_<id>").
+        session_id: MongoDB user ObjectId string (matches Pinecone namespace).
 
     Returns:
         The agent's text response.

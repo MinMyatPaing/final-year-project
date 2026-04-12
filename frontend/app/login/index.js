@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { loginUser } from '../../store/authSlice';
 import apiClient from '../../api/client';
 import '../../global.css';
@@ -11,6 +12,7 @@ import HeroSection from '../../components/login/HeroSection';
 import LoginForm from '../../components/login/LoginForm';
 
 export default function Login() {
+  const signedOut = useSelector((state) => !!state.auth?.signedOut);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +54,16 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Signed-out banner — only shown after an explicit logout */}
+          {signedOut && (
+            <View className="mx-5 mt-4 flex-row items-center bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+              <Ionicons name="checkmark-circle-outline" size={18} color="#10b981" />
+              <Text className="text-emerald-700 text-sm font-medium ml-2">
+                You have been signed out successfully.
+              </Text>
+            </View>
+          )}
+
           <HeroSection />
 
           <LoginForm

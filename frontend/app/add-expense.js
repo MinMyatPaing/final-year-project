@@ -5,11 +5,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import apiClient from '../api/client';
 import { fetchTransactions } from '../store/transactionSlice';
 import '../global.css';
+
+// NativeWind 4.x / new-arch: shadow-* utility classes go through the CSS
+// interop which internally calls useNavigationContainerContext() — this
+// throws "Couldn't find a navigation context" when applied conditionally
+// (class toggled on re-render) inside a Stack screen on the new arch.
+// Replace with plain React Native shadow style object instead.
+const TOGGLE_SHADOW = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.08,
+  shadowRadius: 2,
+  elevation: 2,           // Android
+};
 
 const CATEGORIES = [
   { label: 'Food', icon: 'fast-food-outline', color: '#6366f1', bg: '#eef2ff' },
@@ -23,6 +36,7 @@ const CATEGORIES = [
 ];
 
 export default function AddExpense() {
+  const router = useRouter();   // hook — always bound to the correct nav context
   const dispatch = useDispatch();
 
   const [description, setDescription] = useState('');
@@ -75,10 +89,15 @@ export default function AddExpense() {
         </View>
 
         <ScrollView className="px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {/* Type toggle */}
+          {/* Type toggle
+            NativeWind 4.x / new-arch: shadow-* classes go through the CSS
+            interop which internally calls useNavigationContainerContext().
+            Use native RN shadow props via `style` instead.
+          */}
           <View className="flex-row bg-slate-100 rounded-2xl p-1 mb-5">
             <TouchableOpacity
-              className={`flex-1 py-2.5 rounded-xl items-center ${isExpense ? 'bg-white shadow-sm' : ''}`}
+              className={`flex-1 py-2.5 rounded-xl items-center ${isExpense ? 'bg-white' : ''}`}
+              style={isExpense ? TOGGLE_SHADOW : null}
               onPress={() => setIsExpense(true)}
             >
               <Text className={`text-sm font-semibold ${isExpense ? 'text-rose-500' : 'text-slate-400'}`}>
@@ -86,7 +105,8 @@ export default function AddExpense() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`flex-1 py-2.5 rounded-xl items-center ${!isExpense ? 'bg-white shadow-sm' : ''}`}
+              className={`flex-1 py-2.5 rounded-xl items-center ${!isExpense ? 'bg-white' : ''}`}
+              style={!isExpense ? TOGGLE_SHADOW : null}
               onPress={() => setIsExpense(false)}
             >
               <Text className={`text-sm font-semibold ${!isExpense ? 'text-emerald-500' : 'text-slate-400'}`}>

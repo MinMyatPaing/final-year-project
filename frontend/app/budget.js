@@ -1,52 +1,256 @@
-import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import {
+  View, Text, TouchableOpacity, ScrollView,
+  Switch, Modal, TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import '../global.css';
 
-const CATEGORY_BUDGETS = [
-  { label: 'Food & Groceries', icon: 'fast-food-outline', color: '#6366f1', bg: '#eef2ff', spent: 52.99, limit: 150 },
-  { label: 'Transport', icon: 'car-outline', color: '#06b6d4', bg: '#ecfeff', spent: 15.25, limit: 60 },
-  { label: 'Entertainment', icon: 'musical-notes-outline', color: '#f43f5e', bg: '#fff1f2', spent: 3.9, limit: 40 },
-  { label: 'Shopping', icon: 'bag-outline', color: '#f59e0b', bg: '#fffbeb', spent: 23.08, limit: 80 },
-  { label: 'Education', icon: 'book-outline', color: '#10b981', bg: '#ecfdf5', spent: 0, limit: 50 },
-  { label: 'Housing', icon: 'home-outline', color: '#8b5cf6', bg: '#f5f3ff', spent: 500, limit: 500 },
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const BUDGET_LIMITS_KEY = 'studybudget_limits';
+
+/**
+ * Display categories with a list of lowercase aliases that cover both
+ * manually-added transactions (add-expense.js) and AI-categorised ones
+ * (categorize_agent.py).
+ */
+const BUDGET_CATEGORIES = [
+  {
+    label: 'Food & Dining',
+    icon: 'fast-food-outline',
+    color: '#6366f1',
+    bg: '#eef2ff',
+    matches: ['food', 'groceries', 'eat out', 'eating out'],
+  },
+  {
+    label: 'Transport',
+    icon: 'car-outline',
+    color: '#06b6d4',
+    bg: '#ecfeff',
+    matches: ['transport', 'transportation'],
+  },
+  {
+    label: 'Entertainment',
+    icon: 'musical-notes-outline',
+    color: '#f43f5e',
+    bg: '#fff1f2',
+    matches: ['entertainment'],
+  },
+  {
+    label: 'Shopping',
+    icon: 'bag-outline',
+    color: '#f59e0b',
+    bg: '#fffbeb',
+    matches: ['shopping'],
+  },
+  {
+    label: 'Education',
+    icon: 'book-outline',
+    color: '#10b981',
+    bg: '#ecfdf5',
+    matches: ['education'],
+  },
+  {
+    label: 'Housing & Bills',
+    icon: 'home-outline',
+    color: '#8b5cf6',
+    bg: '#f5f3ff',
+    matches: ['housing', 'bills & utilities', 'bills', 'utilities'],
+  },
+  {
+    label: 'Healthcare',
+    icon: 'heart-outline',
+    color: '#ec4899',
+    bg: '#fdf2f8',
+    matches: ['health', 'healthcare'],
+  },
+  {
+    label: 'Personal Care',
+    icon: 'person-outline',
+    color: '#14b8a6',
+    bg: '#f0fdfa',
+    matches: ['personal care'],
+  },
 ];
 
-const AI_SUGGESTIONS = [
-  { icon: 'trending-down-outline', color: '#10b981', text: 'You spent 35% less on transport last week. Keep it up!' },
-  { icon: 'alert-circle-outline', color: '#f59e0b', text: 'You\'re on track to exceed your Shopping budget by £18 this month.' },
-  { icon: 'bulb-outline', color: '#6366f1', text: 'Setting aside £200/month could build a 3-month emergency fund in a year.' },
-];
+const DEFAULT_LIMITS = {
+  'Food & Dining': 150,
+  Transport: 60,
+  Entertainment: 40,
+  Shopping: 80,
+  Education: 50,
+  'Housing & Bills': 500,
+  Healthcare: 30,
+  'Personal Care': 30,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Map a transaction category string to a budget display category label. */
+function matchCategory(txnCategory) {
+  const lower = (txnCategory || '').toLowerCase().trim();
+  for (const cat of BUDGET_CATEGORIES) {
+    if (cat.matches.some((m) => lower === m || lower.includes(m) || m.includes(lower))) {
+      return cat.label;
+    }
+  }
+  return null; // falls into "Other" — not tracked in a named budget
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function BudgetBar({ spent, limit }) {
-  const pct = Math.min((spent / limit) * 100, 100);
+  const pct = Math.min((spent / (limit || 1)) * 100, 100);
   const over = spent > limit;
   return (
     <View className="mt-2">
       <View className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <View
-          style={{ width: `${pct}%`, backgroundColor: over ? '#f43f5e' : pct > 80 ? '#f59e0b' : '#6366f1' }}
+          style={{
+            width: `${pct}%`,
+            backgroundColor: over ? '#f43f5e' : pct > 80 ? '#f59e0b' : '#6366f1',
+          }}
           className="h-full rounded-full"
         />
       </View>
       <View className="flex-row justify-between mt-0.5">
         <Text className="text-slate-400 text-xs">£{spent.toFixed(0)} spent</Text>
         <Text className={`text-xs font-medium ${over ? 'text-rose-500' : 'text-slate-400'}`}>
-          {over ? `£${(spent - limit).toFixed(0)} over` : `£${(limit - spent).toFixed(0)} left`}
+          {over
+            ? `£${(spent - limit).toFixed(0)} over`
+            : `£${(limit - spent).toFixed(0)} left`}
         </Text>
       </View>
     </View>
   );
 }
 
-export default function Budget() {
-  const [alertsEnabled, setAlertsEnabled] = useState(true);
-  const [autoSave, setAutoSave] = useState(false);
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
+export default function Budget() {
+  const { transactions } = useSelector((state) => state.transaction);
+
+  const [limits, setLimits] = useState(DEFAULT_LIMITS);
+  const [editLimits, setEditLimits] = useState(DEFAULT_LIMITS);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+
+  // ─── Load persisted limits on mount ──────────────────────────────────────
+  useEffect(() => {
+    AsyncStorage.getItem(BUDGET_LIMITS_KEY).then((val) => {
+      if (val) {
+        const saved = JSON.parse(val);
+        setLimits(saved);
+        setEditLimits(saved);
+      }
+    });
+  }, []);
+
+  // ─── Calculate this-month spending per category ───────────────────────────
+  const { categorySpending, totalSpent, totalBudget, overCategories } = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const spending = {};
+    BUDGET_CATEGORIES.forEach((c) => { spending[c.label] = 0; });
+
+    (transactions || []).forEach((t) => {
+      const amt = parseFloat(t.amount);
+      if (isNaN(amt) || amt >= 0) return; // skip income / bad data
+      const d = new Date(t.date);
+      if (d < monthStart) return; // only current month
+
+      const cat = matchCategory(t.category);
+      if (cat) spending[cat] += Math.abs(amt);
+    });
+
+    const totalSpent   = Object.values(spending).reduce((a, b) => a + b, 0);
+    const totalBudget  = Object.values(limits).reduce((a, b) => a + b, 0);
+    const overCategories = BUDGET_CATEGORIES.filter(
+      (c) => (spending[c.label] || 0) > (limits[c.label] || Infinity)
+    );
+
+    return { categorySpending: spending, totalSpent, totalBudget, overCategories };
+  }, [transactions, limits]);
+
+  const totalPct = Math.min((totalSpent / (totalBudget || 1)) * 100, 100);
+
+  // ─── Save edited limits ───────────────────────────────────────────────────
+  const saveEditedLimits = async () => {
+    setLimits(editLimits);
+    await AsyncStorage.setItem(BUDGET_LIMITS_KEY, JSON.stringify(editLimits));
+    setEditModalVisible(false);
+  };
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+
+      {/* ── Edit Limits Modal ─────────────────────────────────────────────── */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+        >
+          <View className="bg-white rounded-t-3xl px-5 pt-5 pb-8">
+            <Text className="text-slate-800 font-bold text-lg mb-1">Edit Monthly Limits</Text>
+            <Text className="text-slate-400 text-xs mb-4">Tap a value to change it</Text>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+              {BUDGET_CATEGORIES.map((cat) => (
+                <View key={cat.label} className="flex-row items-center mb-3">
+                  <View
+                    style={{ backgroundColor: cat.bg }}
+                    className="w-8 h-8 rounded-xl items-center justify-center mr-3"
+                  >
+                    <Ionicons name={cat.icon} size={15} color={cat.color} />
+                  </View>
+                  <Text className="flex-1 text-slate-700 text-sm">{cat.label}</Text>
+                  <View className="flex-row items-center bg-slate-100 rounded-xl px-3 py-1.5">
+                    <Text className="text-slate-500 text-sm mr-1">£</Text>
+                    <TextInput
+                      value={String(editLimits[cat.label] ?? '')}
+                      onChangeText={(v) =>
+                        setEditLimits((prev) => ({
+                          ...prev,
+                          [cat.label]: parseFloat(v) || 0,
+                        }))
+                      }
+                      keyboardType="numeric"
+                      selectTextOnFocus
+                      style={{ width: 60, color: '#1e293b', fontSize: 14, fontWeight: '600' }}
+                    />
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              onPress={saveEditedLimits}
+              className="bg-indigo-600 rounded-xl py-3.5 items-center mt-4"
+            >
+              <Text className="text-white font-bold text-base">Save Limits</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setEditModalVisible(false)}
+              className="items-center mt-3"
+            >
+              <Text className="text-slate-400 text-sm">Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <View className="flex-row items-center px-5 pt-2 pb-4">
         <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
           <Ionicons name="arrow-back" size={22} color="#4f46e5" />
@@ -55,114 +259,111 @@ export default function Budget() {
       </View>
 
       <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
-        {/* Monthly Budget Goal */}
+
+        {/* ── Monthly Overview Card ──────────────────────────────────────── */}
         <View className="bg-indigo-600 rounded-2xl p-5 mb-5">
           <View className="flex-row justify-between items-center mb-1">
-            <Text className="text-indigo-200 text-xs font-medium">Monthly Budget Goal</Text>
-            <TouchableOpacity className="bg-white/20 px-3 py-1 rounded-full">
+            <Text className="text-indigo-200 text-xs font-medium">This Month's Budget</Text>
+            <TouchableOpacity
+              className="bg-white/20 px-3 py-1 rounded-full"
+              onPress={() => { setEditLimits(limits); setEditModalVisible(true); }}
+            >
               <Text className="text-white text-xs font-semibold">Edit</Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-white text-3xl font-bold">£1,000</Text>
+          <Text className="text-white text-3xl font-bold">£{totalBudget.toFixed(0)}</Text>
           <View className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
-            <View className="h-full bg-white rounded-full" style={{ width: '63%' }} />
+            <View
+              className="h-full bg-white rounded-full"
+              style={{ width: `${totalPct}%` }}
+            />
           </View>
           <View className="flex-row justify-between mt-1.5">
-            <Text className="text-indigo-200 text-xs">£630 spent</Text>
-            <Text className="text-indigo-200 text-xs">£370 remaining</Text>
+            <Text className="text-indigo-200 text-xs">£{totalSpent.toFixed(0)} spent</Text>
+            <Text className="text-indigo-200 text-xs">
+              {totalSpent > totalBudget
+                ? `£${(totalSpent - totalBudget).toFixed(0)} over budget`
+                : `£${(totalBudget - totalSpent).toFixed(0)} remaining`}
+            </Text>
           </View>
         </View>
 
-        {/* Savings Threshold */}
-        <View className="bg-white rounded-2xl shadow-sm p-4 mb-4">
-          <View className="flex-row items-center mb-3">
-            <Ionicons name="wallet-outline" size={18} color="#6366f1" />
-            <Text className="text-slate-800 font-bold text-sm ml-2">Savings Threshold</Text>
-          </View>
-          <Text className="text-slate-500 text-sm mb-3">Set a monthly savings target to set aside automatically.</Text>
-          {[
-            { label: 'Savings Target', value: '£200 / month', icon: 'trending-up-outline', color: '#10b981' },
-            { label: 'Emergency Fund Goal', value: '£1,200', icon: 'shield-checkmark-outline', color: '#6366f1' },
-            { label: 'Progress', value: '£480 saved (40%)', icon: 'pie-chart-outline', color: '#f59e0b' },
-          ].map((item, i) => (
-            <View key={i} className="flex-row items-center py-2.5 border-b border-slate-50">
-              <Ionicons name={item.icon} size={16} color={item.color} />
-              <Text className="flex-1 text-slate-600 text-sm ml-2">{item.label}</Text>
-              <Text className="text-slate-700 text-sm font-semibold">{item.value}</Text>
-              <Ionicons name="chevron-forward" size={14} color="#cbd5e1" className="ml-1" />
+        {/* ── Over-budget warning ────────────────────────────────────────── */}
+        {overCategories.length > 0 && (
+          <View className="bg-rose-50 border border-rose-200 rounded-2xl p-4 mb-4">
+            <View className="flex-row items-center mb-2">
+              <Ionicons name="alert-circle" size={18} color="#f43f5e" />
+              <Text className="text-rose-600 font-bold text-sm ml-2">Over Budget</Text>
             </View>
-          ))}
-        </View>
+            {overCategories.map((c) => (
+              <Text key={c.label} className="text-rose-500 text-sm">
+                • {c.label}:{' '}
+                £{((categorySpending[c.label] || 0) - (limits[c.label] || 0)).toFixed(0)} over
+              </Text>
+            ))}
+          </View>
+        )}
 
-        {/* Category Budgets */}
-        <Text className="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-2">Category Budgets</Text>
+        {/* ── Category Bars ──────────────────────────────────────────────── */}
+        <Text className="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-2">
+          Spending This Month
+        </Text>
         <View className="bg-white rounded-2xl shadow-sm p-4 mb-4">
-          {CATEGORY_BUDGETS.map((cat, i) => (
-            <View key={i} className={i < CATEGORY_BUDGETS.length - 1 ? 'mb-4' : ''}>
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center">
-                  <View style={{ backgroundColor: cat.bg }} className="w-8 h-8 rounded-xl items-center justify-center mr-2">
-                    <Ionicons name={cat.icon} size={15} color={cat.color} />
+          {BUDGET_CATEGORIES.map((cat, i) => {
+            const spent = categorySpending[cat.label] || 0;
+            const limit = limits[cat.label] || 0;
+            return (
+              <View
+                key={cat.label}
+                className={i < BUDGET_CATEGORIES.length - 1 ? 'mb-4' : ''}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View
+                      style={{ backgroundColor: cat.bg }}
+                      className="w-8 h-8 rounded-xl items-center justify-center mr-2"
+                    >
+                      <Ionicons name={cat.icon} size={15} color={cat.color} />
+                    </View>
+                    <Text className="text-slate-700 text-sm font-medium">{cat.label}</Text>
                   </View>
-                  <Text className="text-slate-700 text-sm font-medium">{cat.label}</Text>
+                  <Text className="text-slate-500 text-xs">/ £{limit}</Text>
                 </View>
-                <Text className="text-slate-500 text-xs">/ £{cat.limit}</Text>
+                <BudgetBar spent={spent} limit={limit} />
               </View>
-              <BudgetBar spent={cat.spent} limit={cat.limit} />
-            </View>
-          ))}
-          <TouchableOpacity className="mt-3 flex-row items-center justify-center py-2.5 border border-dashed border-indigo-300 rounded-xl">
-            <Ionicons name="add" size={16} color="#6366f1" />
-            <Text className="text-indigo-500 text-sm font-medium ml-1">Add Category Budget</Text>
+            );
+          })}
+
+          <TouchableOpacity
+            onPress={() => { setEditLimits(limits); setEditModalVisible(true); }}
+            className="mt-3 flex-row items-center justify-center py-2.5 border border-dashed border-indigo-300 rounded-xl"
+          >
+            <Ionicons name="create-outline" size={15} color="#6366f1" />
+            <Text className="text-indigo-500 text-sm font-medium ml-1">
+              Adjust Budget Limits
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Smart Alerts */}
-        <View className="bg-white rounded-2xl shadow-sm p-4 mb-4">
+        {/* ── Smart Alerts ───────────────────────────────────────────────── */}
+        <View className="bg-white rounded-2xl shadow-sm p-4 mb-8">
           <Text className="text-slate-800 font-bold text-sm mb-3">Smart Alerts</Text>
-          {[
-            { label: 'Budget limit alerts', sub: 'Notify when 80% of a budget is reached', value: alertsEnabled, onChange: setAlertsEnabled },
-            { label: 'Auto-save reminders', sub: 'Monthly reminder to move savings', value: autoSave, onChange: setAutoSave },
-          ].map((item, i) => (
-            <View key={i} className={`flex-row items-center justify-between ${i === 0 ? 'mb-3 pb-3 border-b border-slate-50' : ''}`}>
-              <View className="flex-1 mr-3">
-                <Text className="text-slate-700 text-sm font-medium">{item.label}</Text>
-                <Text className="text-slate-400 text-xs mt-0.5">{item.sub}</Text>
-              </View>
-              <Switch
-                value={item.value}
-                onValueChange={item.onChange}
-                trackColor={{ false: '#e2e8f0', true: '#a5b4fc' }}
-                thumbColor={item.value ? '#4f46e5' : '#f1f5f9'}
-              />
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 mr-3">
+              <Text className="text-slate-700 text-sm font-medium">Budget limit alerts</Text>
+              <Text className="text-slate-400 text-xs mt-0.5">
+                Notify when 80% of a budget is reached
+              </Text>
             </View>
-          ))}
-        </View>
-
-        {/* AI Suggestions */}
-        <Text className="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-2">AI Suggestions</Text>
-        {AI_SUGGESTIONS.map((s, i) => (
-          <View key={i} className="bg-white rounded-xl shadow-sm p-4 mb-2 flex-row items-start">
-            <Ionicons name={s.icon} size={20} color={s.color} />
-            <Text className="flex-1 text-slate-600 text-sm ml-2 leading-5">{s.text}</Text>
+            <Switch
+              value={alertsEnabled}
+              onValueChange={setAlertsEnabled}
+              trackColor={{ false: '#e2e8f0', true: '#a5b4fc' }}
+              thumbColor={alertsEnabled ? '#4f46e5' : '#f1f5f9'}
+            />
           </View>
-        ))}
-
-        {/* Reports */}
-        <View className="bg-white rounded-2xl shadow-sm p-4 mb-8 mt-2">
-          <Text className="text-slate-800 font-bold text-sm mb-3">Spending Reports</Text>
-          {[
-            { label: 'Monthly Summary', icon: 'bar-chart-outline', color: '#6366f1' },
-            { label: 'Category Breakdown', icon: 'pie-chart-outline', color: '#06b6d4' },
-            { label: 'Trends Over Time', icon: 'trending-up-outline', color: '#10b981' },
-          ].map((item, i) => (
-            <TouchableOpacity key={i} className="flex-row items-center py-3 border-b border-slate-50 last:border-0">
-              <Ionicons name={item.icon} size={18} color={item.color} />
-              <Text className="flex-1 text-slate-600 text-sm ml-2">{item.label}</Text>
-              <Ionicons name="chevron-forward" size={14} color="#cbd5e1" />
-            </TouchableOpacity>
-          ))}
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );

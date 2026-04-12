@@ -11,6 +11,20 @@ export const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.130.171.15
 
 const TOKEN_KEY = 'studybudget_token';
 
+// ─── In-memory token cache ───────────────────────────────────────────────────
+// SecureStore.setItemAsync is async (fire-and-forget in the reducer).
+// We keep a synchronous in-memory copy so the axios interceptor never misses
+// the token on the very first request right after login.
+let _bearerToken = null;
+
+export function setBearerToken(token) {
+  _bearerToken = token;
+}
+
+export function clearBearerToken() {
+  _bearerToken = null;
+}
+
 const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 30000, // timeout the request after 30s
@@ -18,10 +32,11 @@ const apiClient = axios.create({
 });
 
 // ─── Request Interceptor ─────────────────────────────────────────────────────
-// Attach the stored Bearer token to every outgoing request automatically
+// 1. Use in-memory token if available (set synchronously on login).
+// 2. Fall back to SecureStore (covers app restarts where in-memory is cold).
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    const token = _bearerToken ?? (await SecureStore.getItemAsync(TOKEN_KEY));
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -49,6 +64,7 @@ apiClient.interceptors.response.use(
       (code === 'TOKEN_EXPIRED' || code === 'INVALID_TOKEN' || code === 'NO_TOKEN');
 
     if (isAuthError && _dispatch) {
+      clearBearerToken();
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       const { logoutUser } = await import('../store/authSlice');
       _dispatch(logoutUser());

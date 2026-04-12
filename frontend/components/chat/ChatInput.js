@@ -39,7 +39,7 @@ export default function ChatInput({ inputText, setInputText, isTyping, onSend })
         </TouchableOpacity>
       </View>
       <Text className="text-slate-300 text-xs text-center mt-1.5">
-        Powered by GPT-4o · Responses may not be 100% accurate
+        Powered by Claude Sonnet · Responses may not be 100% accurate
       </Text>
     </View>
   );

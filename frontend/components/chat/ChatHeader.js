@@ -12,7 +12,7 @@ export default function ChatHeader({ onClear }) {
           <Text className="text-white text-base font-bold">AI Finance Assistant</Text>
           <View className="flex-row items-center mt-0.5">
             <View className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5" />
-            <Text className="text-indigo-200 text-xs">GPT-4o · Web Search Enabled</Text>
+            <Text className="text-indigo-200 text-xs">Claude Sonnet · Web Search Enabled</Text>
           </View>
         </View>
         <TouchableOpacity

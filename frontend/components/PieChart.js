@@ -1,38 +1,57 @@
 import { View, Text, Dimensions } from 'react-native';
 import { PieChart as Chart } from 'react-native-chart-kit';
 
+/**
+ * Covers both manually-added categories (add-expense.js) and
+ * AI-categorised ones (categorize_agent.py).
+ */
 const CATEGORY_COLORS = {
-  Food: '#6366f1',
-  Transport: '#22d3ee',
-  Entertainment: '#f43f5e',
-  Shopping: '#f59e0b',
-  Education: '#10b981',
-  Health: '#ec4899',
-  Other: '#94a3b8',
+  // Manual (add-expense.js)
+  Food:             '#6366f1',
+  Transport:        '#22d3ee',
+  Entertainment:    '#f43f5e',
+  Shopping:         '#f59e0b',
+  Education:        '#10b981',
+  Health:           '#ec4899',
+  Housing:          '#8b5cf6',
+  // AI agent (categorize_agent.py)
+  Transportation:   '#22d3ee',   // same hue as Transport
+  'Eat Out':        '#818cf8',
+  Groceries:        '#a78bfa',
+  'Bills & Utilities': '#8b5cf6',
+  Healthcare:       '#ec4899',
+  'Personal Care':  '#14b8a6',
+  Other:            '#94a3b8',
 };
 
 const DEFAULT_DATA = [
-  { name: 'Food', amount: 215, color: CATEGORY_COLORS.Food },
-  { name: 'Transport', amount: 120, color: CATEGORY_COLORS.Transport },
-  { name: 'Entertainment', amount: 85, color: CATEGORY_COLORS.Entertainment },
-  { name: 'Shopping', amount: 160, color: CATEGORY_COLORS.Shopping },
-  { name: 'Other', amount: 60, color: CATEGORY_COLORS.Other },
+  { name: 'Food',          amount: 215, color: CATEGORY_COLORS.Food },
+  { name: 'Transport',     amount: 120, color: CATEGORY_COLORS.Transport },
+  { name: 'Entertainment', amount: 85,  color: CATEGORY_COLORS.Entertainment },
+  { name: 'Shopping',      amount: 160, color: CATEGORY_COLORS.Shopping },
+  { name: 'Other',         amount: 60,  color: CATEGORY_COLORS.Other },
 ];
 
 function buildChartData(transactions) {
-  if (!transactions || transactions.length === 0) return DEFAULT_DATA;
+  // Only include expense transactions (amount < 0)
+  const expenses = (transactions || []).filter(
+    (t) => parseFloat(t.amount) < 0
+  );
+  if (expenses.length === 0) return DEFAULT_DATA;
 
   const totals = {};
-  transactions.forEach((t) => {
+  expenses.forEach((t) => {
     const cat = t.category || 'Other';
     totals[cat] = (totals[cat] || 0) + Math.abs(parseFloat(t.amount) || 0);
   });
 
-  return Object.entries(totals).map(([name, amount]) => ({
-    name,
-    amount: parseFloat(amount.toFixed(2)),
-    color: CATEGORY_COLORS[name] || CATEGORY_COLORS.Other,
-  }));
+  return Object.entries(totals)
+    .filter(([, amount]) => amount > 0)
+    .map(([name, amount]) => ({
+      name,
+      amount: parseFloat(amount.toFixed(2)),
+      color: CATEGORY_COLORS[name] ?? CATEGORY_COLORS.Other,
+    }));
 }
 
 export default function PieChart({ transactions }) {
