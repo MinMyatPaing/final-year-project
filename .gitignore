@@ -1,0 +1,92 @@
+# ─── Secrets / Environment ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example          # allow example templates to be committed
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.mobileprovision
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ─── Node (backend + frontend) ────────────────────────────────────────────────
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+.pnp
+.pnp.js
+
+# ─── Expo / React Native ──────────────────────────────────────────────────────
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+/ios
+/android
+*.orig.*
+
+# ─── Python (agent) ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# uv
+# (uv.lock IS committed — it pins exact versions for reproducibility)
+
+# distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy / ruff cache
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ─── Uploads / Generated files ────────────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep   # keep the folder itself
+
+*.pdf
+
+# ─── IDE / Editor ─────────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log
