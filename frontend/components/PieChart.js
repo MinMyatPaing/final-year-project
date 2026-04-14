@@ -24,20 +24,12 @@ const CATEGORY_COLORS = {
   Other:            '#94a3b8',
 };
 
-const DEFAULT_DATA = [
-  { name: 'Food',          amount: 215, color: CATEGORY_COLORS.Food },
-  { name: 'Transport',     amount: 120, color: CATEGORY_COLORS.Transport },
-  { name: 'Entertainment', amount: 85,  color: CATEGORY_COLORS.Entertainment },
-  { name: 'Shopping',      amount: 160, color: CATEGORY_COLORS.Shopping },
-  { name: 'Other',         amount: 60,  color: CATEGORY_COLORS.Other },
-];
-
 function buildChartData(transactions) {
   // Only include expense transactions (amount < 0)
   const expenses = (transactions || []).filter(
     (t) => parseFloat(t.amount) < 0
   );
-  if (expenses.length === 0) return DEFAULT_DATA;
+  if (expenses.length === 0) return [];
 
   const totals = {};
   expenses.forEach((t) => {
@@ -58,6 +50,19 @@ export default function PieChart({ transactions }) {
   const chartData = buildChartData(transactions);
   const screenWidth = Dimensions.get('window').width;
   const total = chartData.reduce((sum, d) => sum + d.amount, 0);
+
+  // ── Empty state — no expenses yet ─────────────────────────────────────────
+  if (chartData.length === 0) {
+    return (
+      <View className="items-center py-8">
+        <Text style={{ fontSize: 36 }}>📊</Text>
+        <Text className="text-slate-500 text-sm font-medium mt-2">No spending data yet</Text>
+        <Text className="text-slate-400 text-xs mt-1 text-center px-4">
+          Upload a bank statement or add an expense to see your spending breakdown.
+        </Text>
+      </View>
+    );
+  }
 
   const formattedData = chartData.map((d) => ({
     name: d.name,

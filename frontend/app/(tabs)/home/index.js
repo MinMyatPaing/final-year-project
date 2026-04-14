@@ -20,6 +20,11 @@ export default function Home() {
   const { transactions } = useSelector((state) => state.transaction);
   const [uploadVisible, setUploadVisible] = useState(false);
 
+  // ── Selected month — lifted here so SpendingOverview stays in sync ──────────
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
   // Depend on `token` so we only fetch once the auth token is actually available.
   // After fetching, check budget thresholds and fire local push notifications.
   useEffect(() => {
@@ -32,20 +37,15 @@ export default function Home() {
   }, [token]);
 
   const allTxns = transactions || [];
-  const totalIncome = allTxns
-    .filter((t) => parseFloat(t.amount) > 0)
-    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-  const totalExpenses = allTxns
-    .filter((t) => parseFloat(t.amount) < 0)
-    .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount)), 0);
 
+  // Recent transactions (last 5 across all time)
   const recentTxns = allTxns.slice(0, 5);
 
   const handleQuickAction = (key) => {
     if (key === "upload") setUploadVisible(true);
     if (key === "add") router.push("/add-expense");
     if (key === "budget") router.push("/budget");
-    if (key === "reports") router.push("/all-transactions");
+    if (key === "reports") router.push("/reports");
   };
 
   return (
@@ -58,11 +58,14 @@ export default function Home() {
           style={{ flex: 1, backgroundColor: "#4f46e5" }}
           contentContainerStyle={{ paddingBottom: 24 }}
         >
+          {/* HomeHeader owns the month picker UI and notifies us of changes */}
           <HomeHeader
             user={user}
-            totalExpenses={totalExpenses}
-            totalIncome={totalIncome}
-            txCount={allTxns.length}
+            transactions={allTxns}
+            onMonthChange={(year, month) => {
+              setSelectedYear(year);
+              setSelectedMonth(month);
+            }}
           />
 
           <View
@@ -70,7 +73,14 @@ export default function Home() {
             style={{ minHeight: 600 }}
           >
             <QuickActions onAction={handleQuickAction} />
-            <SpendingOverview transactions={transactions} />
+
+            {/* SpendingOverview receives the selected month from state */}
+            <SpendingOverview
+              transactions={allTxns}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+            />
+
             <RecentTransactions transactions={recentTxns} />
           </View>
         </ScrollView>

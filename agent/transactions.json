@@ -1,122 +1,620 @@
 [
   {
-    "date": "2025-08-20",
-    "description": "BALANCE BROUGHT FORWARD",
-    "amount": 177.57,
-    "balance": 177.57
+    "date": "2025-09-21",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 100.0,
+    "balance": 361.62
   },
   {
-    "date": "2025-08-21",
-    "description": "CASH IN HSBC AUG21",
-    "amount": 750.0,
-    "balance": 177.57
+    "date": "2025-09-22",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -25.67,
+    "balance": null
   },
   {
-    "date": "2025-08-21",
-    "description": "CASH IN HSBC AUG21",
-    "amount": 1940.0,
-    "balance": 279.47
+    "date": "2025-09-22",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -19.96,
+    "balance": null
   },
   {
-    "date": "2025-08-22",
-    "description": "Min Paing",
-    "amount": 48.0,
-    "balance": 279.47
+    "date": "2025-09-22",
+    "description": "PAYPAL *STEAM GAME 04258899642",
+    "amount": -6.8,
+    "balance": null
   },
   {
-    "date": "2025-08-23",
-    "description": "Monthly fee",
-    "amount": 500.0,
-    "balance": 669.66
+    "date": "2025-09-22",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -40.04,
+    "balance": null
   },
   {
-    "date": "2025-08-24",
-    "description": "Min Paing",
-    "amount": 300.0,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -37.74,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "New TongYi Superma",
-    "amount": 5.79,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "Wasabi_KingsCrossS London",
+    "amount": -8.9,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "NYA*Oaka Vending U",
-    "amount": 1.4,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "Wasabi_KingsCrossS London",
+    "amount": -8.9,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "TESCO STORES 2686",
-    "amount": 24.23,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "VICTORIA - MUNICH CANARY WHARF",
+    "amount": -12.95,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "RANAIN LTD T/A BUN",
-    "amount": 9.99,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "VICTORIA - MUNICH CANARY WHARF",
+    "amount": -20.81,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "LIDL GB HUDDERSFIE",
-    "amount": 3.59,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "MCDONALDS 320 HUDDERSFIELD",
+    "amount": -3.39,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "New TongYi Superma",
-    "amount": 5.79,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "MCDONALDS 320 HUDDERSFIELD",
+    "amount": -12.98,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "HUDDERSFIELD DISCO",
-    "amount": 3.9,
-    "balance": 369.66
+    "date": "2025-09-22",
+    "description": "Pho York York",
+    "amount": -39.94,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "A TO Z DISCOUNT ST",
-    "amount": 4.49,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "TFL TRAVEL CH",
+    "amount": -8.6,
+    "balance": 123.54
   },
   {
-    "date": "2025-08-26",
-    "description": "HUDDERSFIELD",
-    "amount": 1.7,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "TFL GOV.UK/CP",
+    "amount": -0.4,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "UBR* PENDING.UBER.",
-    "amount": 13.55,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "NYX HealthmaticLtd",
+    "amount": -17.98,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "TESCO STORES 2686",
-    "amount": 9.12,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "RANAIN LTD T/A BUN HUDDERSFIELD",
+    "amount": -8.24,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "TRAINLINE",
-    "amount": 80.89,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "UBR* PENDING.UBER. LONDON",
+    "amount": -8.11,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "PAYPAL *ALIPAY UK",
-    "amount": 9.6,
-    "balance": 369.66
+    "date": "2025-09-21",
+    "description": "UBER *TRIP LONDON",
+    "amount": -1.0,
+    "balance": null
   },
   {
-    "date": "2025-08-26",
-    "description": "BALANCE CARRIED FORWARD",
-    "amount": 195.62,
-    "balance": 195.62
+    "date": "2025-09-21",
+    "description": "WWW.LNER.CO.UK 03457223333",
+    "amount": -2.1,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -8.45,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -9.1,
+    "balance": 59.56
+  },
+  {
+    "date": "2025-09-23",
+    "description": "AMAZON* O77TI7PY5 LONDON",
+    "amount": -34.17,
+    "balance": 25.39
+  },
+  {
+    "date": "2025-09-24",
+    "description": "ODEON GREAT NORTHE MANCHESTER",
+    "amount": -8.78,
+    "balance": null
+  },
+  {
+    "date": "2025-09-24",
+    "description": "MANCHESTER - ARNDA MSTER M4 3",
+    "amount": -11.79,
+    "balance": null
+  },
+  {
+    "date": "2025-09-24",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 100.0,
+    "balance": null
+  },
+  {
+    "date": "2025-09-24",
+    "description": "Han Hsu Zin Sent from Revolut",
+    "amount": 32.32,
+    "balance": 137.14
+  },
+  {
+    "date": "2025-09-25",
+    "description": "HUDDERSFIELD DISCO HUDDERSFIELD",
+    "amount": -4.0,
+    "balance": null
+  },
+  {
+    "date": "2025-09-25",
+    "description": "SAINSBURYS S/MKTS HUDDERSFIELD",
+    "amount": -2.48,
+    "balance": null
+  },
+  {
+    "date": "2025-09-25",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 100.0,
+    "balance": 230.66
+  },
+  {
+    "date": "2025-09-26",
+    "description": "AMZNMktplace*DK1C6 amazon.co.uk",
+    "amount": -32.32,
+    "balance": null
+  },
+  {
+    "date": "2025-09-26",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -47.99,
+    "balance": 150.35
+  },
+  {
+    "date": "2025-09-27",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 100.0,
+    "balance": 250.35
+  },
+  {
+    "date": "2025-09-28",
+    "description": "Min Maung May los",
+    "amount": -15.0,
+    "balance": 235.35
+  },
+  {
+    "date": "2025-09-29",
+    "description": "Amazon Prime*KY7HA amzn.co.uk/pm",
+    "amount": -4.49,
+    "balance": 230.86
+  },
+  {
+    "date": "2025-09-21",
+    "description": "THE IRONING MAID L HUDDERSFIELD",
+    "amount": -10.85,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "Trainline.com London",
+    "amount": -2.9,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "Just Eat London",
+    "amount": -25.38,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "EE TOPUP VESTA EE.CO.UK",
+    "amount": -13.5,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "SAINSBURY'S SMKTS STOCKPORT STA",
+    "amount": -2.35,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "New TongYi Superma Huddersfield",
+    "amount": -5.79,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "HUDDERSFIELD DISCO HUDDERSFIELD",
+    "amount": -3.5,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "SAINSBURYS S/MKTS HUDDERSFIELD",
+    "amount": -3.24,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -8.14,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "UBR* PENDING.UBER. LONDON",
+    "amount": -9.1,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "PAYPAL *GOOGLE YOU 3531430001",
+    "amount": -7.99,
+    "balance": 122.14
+  },
+  {
+    "date": "2025-09-30",
+    "description": "M PAING MONTHLY FEE",
+    "amount": 400.0,
+    "balance": null
+  },
+  {
+    "date": "2025-09-30",
+    "description": "New TongYi Superma Huddersfield",
+    "amount": -12.79,
+    "balance": null
+  },
+  {
+    "date": "2025-09-30",
+    "description": "SPORTSDIRECT 382 0844332538",
+    "amount": -56.99,
+    "balance": null
+  },
+  {
+    "date": "2025-09-30",
+    "description": "UNIVERSITY OF HUDD HUDDERSFIELD",
+    "amount": -4.25,
+    "balance": null
+  },
+  {
+    "date": "2025-09-30",
+    "description": "Min Paing Main Bank",
+    "amount": -240.0,
+    "balance": null
+  },
+  {
+    "date": "2025-09-30",
+    "description": "Min Maung Sent from Revolut",
+    "amount": 15.0,
+    "balance": 223.11
+  },
+  {
+    "date": "2025-10-01",
+    "description": "KIRKLEES ACTIVE LE TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -18.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-01",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -20.65,
+    "balance": 184.46
+  },
+  {
+    "date": "2025-10-02",
+    "description": "New TongYi Superma Huddersfield",
+    "amount": -6.78,
+    "balance": 177.68
+  },
+  {
+    "date": "2025-10-03",
+    "description": "New TongYi Superma Huddersfield",
+    "amount": -6.9,
+    "balance": 170.78
+  },
+  {
+    "date": "2025-10-04",
+    "description": "SAINSBURYS S/MKTS HUDDERSFIELD",
+    "amount": -1.3,
+    "balance": null
+  },
+  {
+    "date": "2025-10-04",
+    "description": "UNIVERSITY OF HUDDERSFIELD",
+    "amount": -1.85,
+    "balance": null
+  },
+  {
+    "date": "2025-10-04",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -5.08,
+    "balance": 162.55
+  },
+  {
+    "date": "2025-10-04",
+    "description": "Min Paing Acc",
+    "amount": 14.0,
+    "balance": 176.55
+  },
+  {
+    "date": "2025-10-06",
+    "description": "CASH HSBC OCT06 Huddersfield@10:28",
+    "amount": -30.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "UNIVERSITY OF HUDDERSFIELD",
+    "amount": -0.9,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -5.44,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "New TongYi Superma Huddersfield",
+    "amount": -5.49,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -23.43,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -5.07,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "PAYPAL *STEAM GAME 0425889964",
+    "amount": -4.99,
+    "balance": null
+  },
+  {
+    "date": "2025-10-06",
+    "description": "PAYPAL *STEAM GAME 0425889964",
+    "amount": -14.99,
+    "balance": 86.24
+  },
+  {
+    "date": "2025-10-07",
+    "description": "EBAY Commerce UK L P*7114196838",
+    "amount": 0.24,
+    "balance": null
+  },
+  {
+    "date": "2025-10-07",
+    "description": "POST OFFICE COUNTE HUDDERSFIELD",
+    "amount": -3.99,
+    "balance": null
+  },
+  {
+    "date": "2025-10-07",
+    "description": "HUDDERSFIELD BOLTON",
+    "amount": -1.0,
+    "balance": 81.49
+  },
+  {
+    "date": "2025-10-08",
+    "description": "RYMAN HUDDERSFIELD",
+    "amount": -3.49,
+    "balance": null
+  },
+  {
+    "date": "2025-10-08",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -17.57,
+    "balance": null
+  },
+  {
+    "date": "2025-10-08",
+    "description": "UNIVERSITY OF HUDDERSFIELD",
+    "amount": -0.95,
+    "balance": 59.48
+  },
+  {
+    "date": "2025-10-09",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -6.5,
+    "balance": null
+  },
+  {
+    "date": "2025-10-09",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 400.0,
+    "balance": 452.98
+  },
+  {
+    "date": "2025-10-10",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -13.49,
+    "balance": null
+  },
+  {
+    "date": "2025-10-10",
+    "description": "Just Eat Co UK Ltd London",
+    "amount": -17.61,
+    "balance": 421.88
+  },
+  {
+    "date": "2025-10-13",
+    "description": "CASH HSBC OCT13 Huddersfield@12:06",
+    "amount": -20.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-13",
+    "description": "SumUp *Rice Noo Huddersfield",
+    "amount": -12.9,
+    "balance": null
+  },
+  {
+    "date": "2025-10-13",
+    "description": "B&M 713 NEW STREET NEW STREET",
+    "amount": -8.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-13",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -5.44,
+    "balance": null
+  },
+  {
+    "date": "2025-10-13",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -16.08,
+    "balance": null
+  },
+  {
+    "date": "2025-10-13",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -6.39,
+    "balance": 353.07
+  },
+  {
+    "date": "2025-10-14",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -5.1,
+    "balance": null
+  },
+  {
+    "date": "2025-10-14",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -7.27,
+    "balance": null
+  },
+  {
+    "date": "2025-10-14",
+    "description": "SUM'UP *LOUIE SIDD HUDDERSFIELD",
+    "amount": -20.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-14",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -6.2,
+    "balance": 314.5
+  },
+  {
+    "date": "2025-10-15",
+    "description": "Aung Myat Kyaw Placeholder",
+    "amount": -110.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-15",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -7.28,
+    "balance": 197.22
+  },
+  {
+    "date": "2025-10-16",
+    "description": "HUDDERSFIELD DISCO HUDDERSFIELD",
+    "amount": -5.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-16",
+    "description": "TESCO STORES 2686 HUDDERSFIELD",
+    "amount": -24.76,
+    "balance": null
+  },
+  {
+    "date": "2025-10-16",
+    "description": "MCDONALDS 320 HUDDERSFIELD",
+    "amount": -10.99,
+    "balance": 156.47
+  },
+  {
+    "date": "2025-10-17",
+    "description": "Uber Payments UK London",
+    "amount": -26.35,
+    "balance": null
+  },
+  {
+    "date": "2025-10-17",
+    "description": "M Paing MONTHLY FEE",
+    "amount": 150.0,
+    "balance": 280.12
+  },
+  {
+    "date": "2025-10-20",
+    "description": "Min Paing Online purchase",
+    "amount": -3.0,
+    "balance": null
+  },
+  {
+    "date": "2025-10-20",
+    "description": "SAINSBURYS S/MKTS HUDDERSFIELD",
+    "amount": -4.85,
+    "balance": null
+  },
+  {
+    "date": "2025-10-20",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -6.58,
+    "balance": null
+  },
+  {
+    "date": "2025-10-20",
+    "description": "SAINSBURYS S/MKTS HUDDERSFIELD",
+    "amount": -0.78,
+    "balance": null
+  },
+  {
+    "date": "2025-10-20",
+    "description": "TRAINLINE WWW.THETRAINL",
+    "amount": -82.24,
+    "balance": 182.67
+  },
+  {
+    "date": "2025-09-21",
+    "description": "New Tong Yi Superma Huddersfield",
+    "amount": -7.38,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "HUA LONG SUPERMARK HUDDERSFIELD",
+    "amount": -5.44,
+    "balance": null
+  },
+  {
+    "date": "2025-09-21",
+    "description": "INTL 0080965630 APPLE.COM/BILL 0800107628",
+    "amount": -4.39,
+    "balance": 165.46
   }
 ]

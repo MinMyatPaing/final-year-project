@@ -13,6 +13,8 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { loginUser } from '../../store/authSlice';
 import apiClient from '../../api/client';
 import '../../global.css';
 
@@ -54,6 +56,7 @@ function InputField({ icon, placeholder, value, onChangeText, secureTextEntry, k
 
 export default function Register() {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   // ── Step state ──────────────────────────────────────────────────────────
   const [step, setStep]       = useState(0);
@@ -105,7 +108,7 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      await apiClient.post('/api/auth/register', {
+      const res = await apiClient.post('/api/auth/register', {
         name:                    name.trim(),
         email:                   email.trim().toLowerCase(),
         password,
@@ -115,12 +118,15 @@ export default function Register() {
         monthlySpendingGoal:     parseFloat(spendingGoal)   || 0,
         aiPersonalisationConsent: aiConsent,
       });
-      router.replace('/login');
+      // Auto-login: store token + user in Redux, then navigate to home
+      dispatch(loginUser({ token: res.data.token, user: res.data.user }));
+      // router.replace is not needed — the _layout.js auth guard will
+      // automatically redirect to (tabs) once the Redux state is set.
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
-    } finally {
       setLoading(false);
     }
+    // Note: don't setLoading(false) on success — component unmounts on redirect
   };
 
   // ── Shared progress bar ──────────────────────────────────────────────────

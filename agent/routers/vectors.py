@@ -11,9 +11,10 @@ from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
 from flows.vector_store import (
-    upsert_transactions  as _upsert,
-    upsert_user_profile  as _upsert_profile,
-    delete_transaction   as _delete,
+    upsert_transactions as _upsert,
+    upsert_user_profile as _upsert_profile,
+    delete_transaction as _delete,
+    delete_user_vectors as _delete_user,
 )
 
 router = APIRouter(prefix="/vectors", tags=["vectors"])
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # ─── Request models ───────────────────────────────────────────────────────────
+
 
 class UpsertRequest(BaseModel):
     transactions: list[dict[str, Any]]
@@ -38,6 +40,7 @@ class DeleteRequest(BaseModel):
 
 
 # ─── Background helpers ───────────────────────────────────────────────────────
+
 
 def _bg_upsert(transactions: list[dict], user_id: str) -> None:
     try:
@@ -65,6 +68,7 @@ def _bg_delete(transaction_id: str, user_id: str) -> None:
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
+
 @router.post("/upsert")
 async def upsert(req: UpsertRequest, background_tasks: BackgroundTasks):
     """Embed and upsert a list of transactions for a user (background)."""
@@ -88,4 +92,23 @@ async def upsert_profile(req: UpsertProfileRequest, background_tasks: Background
 async def delete(req: DeleteRequest, background_tasks: BackgroundTasks):
     """Delete a single transaction vector (background)."""
     background_tasks.add_task(_bg_delete, req.transaction_id, req.user_id)
+    return {"success": True}
+
+
+class DeleteUserRequest(BaseModel):
+    user_id: str
+
+
+def _bg_delete_user(user_id: str) -> None:
+    try:
+        _delete_user(user_id)
+        logger.info("[vectors] all vectors deleted for user %s", user_id)
+    except Exception as exc:
+        logger.warning("[vectors] delete-user failed: %s", exc)
+
+
+@router.delete("/delete-user")
+async def delete_user(req: DeleteUserRequest, background_tasks: BackgroundTasks):
+    """Delete ALL vectors for a user (called on account deletion)."""
+    background_tasks.add_task(_bg_delete_user, req.user_id)
     return {"success": True}

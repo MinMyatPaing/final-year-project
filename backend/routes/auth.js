@@ -18,4 +18,7 @@ router.get('/me', authCheck, authController.me);
 // PATCH /api/auth/profile — update display name (protected)
 router.patch('/profile', authCheck, authController.updateProfile);
 
+// DELETE /api/auth/account — permanently delete account + all data (protected)
+router.delete('/account', authCheck, authController.deleteAccount);
+
 module.exports = router;

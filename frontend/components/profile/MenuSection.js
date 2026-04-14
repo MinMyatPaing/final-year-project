@@ -16,8 +16,8 @@ export const MENU_SECTIONS = [
   {
     title: 'Finance',
     items: [
-      { label: 'Budget Settings', icon: 'wallet-outline', color: '#6366f1', bg: '#eef2ff', route: null },
-      { label: 'Export Reports', icon: 'download-outline', color: '#10b981', bg: '#ecfdf5', route: null },
+      { label: 'Budget Settings', icon: 'wallet-outline', color: '#6366f1', bg: '#eef2ff', route: '/budget' },
+      { label: 'Export Reports', icon: 'download-outline', color: '#10b981', bg: '#ecfdf5', route: '/reports' },
     ],
   },
   {
@@ -26,6 +26,7 @@ export const MENU_SECTIONS = [
       { label: 'Edit Profile', icon: 'person-outline', color: '#f59e0b', bg: '#fffbeb', route: '/edit-profile' },
       { label: 'Notifications', icon: 'notifications-outline', color: '#8b5cf6', bg: '#f5f3ff', route: '__notifications__' },
       { label: 'Privacy & Security', icon: 'shield-outline', color: '#ec4899', bg: '#fdf2f8', route: '/privacy' },
+      { label: 'Delete Account', icon: 'trash-outline', color: '#f43f5e', bg: '#fff1f2', route: '/delete-account' },
     ],
   },
   {

@@ -1,6 +1,6 @@
 """
 LangGraph flows for StudyBudget Agent.
-Re-exported here for clean imports in api.py.
+Re-exported here for clean imports in routers/.
 """
 
 from .extract_agent import process_bank_statement

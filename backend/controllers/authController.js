@@ -184,3 +184,60 @@ exports.me = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 };
+
+/**
+ * DELETE /api/auth/account
+ * Permanently deletes the user account, all their transactions, and their
+ * Pinecone vectors.  Requires the user to confirm their email in the request
+ * body as a safety check.
+ *
+ * Body: { email: string }
+ */
+exports.deleteAccount = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email confirmation is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Confirm the supplied email matches the account
+    if (user.email.toLowerCase() !== email.toLowerCase().trim()) {
+      return res.status(400).json({ error: 'Email does not match your account' });
+    }
+
+    const userId = user._id.toString();
+    const userMongoId = user._id;
+
+    // ── Respond to the client immediately ────────────────────────────────────
+    // The user document is deleted first (blocks login), then all cleanup
+    // happens in the background so the HTTP response is instant.
+    await User.findByIdAndDelete(userMongoId);
+    res.clearCookie('token');
+    res.json({ success: true, message: 'Account and all associated data have been permanently deleted.' });
+
+    // ── Background cleanup (non-blocking, after response is sent) ────────────
+    const Transaction = require('../models/Transaction');
+
+    // 1. Delete all transactions (can be slow for large datasets — run after response)
+    Transaction.deleteMany({ userId: userMongoId })
+      .catch((err) => console.warn('[cleanup] transaction deleteMany failed:', err.message));
+
+    // 2. Delete vectors from Pinecone (5s timeout)
+    axios
+      .delete(`${AGENT_URL}/vectors/delete-user`, {
+        data: { user_id: userId },
+        timeout: 5_000,
+      })
+      .catch((err) => console.warn('[vector-sync] delete-user failed:', err.message));
+
+  } catch (error) {
+    console.error('deleteAccount error:', error);
+    // Only send error if response hasn't been sent yet
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to delete account' });
+    }
+  }
+};

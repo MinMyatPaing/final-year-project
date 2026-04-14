@@ -29,13 +29,13 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 EMBED_MODEL = "text-embedding-3-small"
-EMBED_DIM   = 1536
-BATCH_SIZE  = 100
+EMBED_DIM = 1536
+BATCH_SIZE = 100
 
 # ─── Lazy-loaded clients ──────────────────────────────────────────────────────
 
 _oai_client = None
-_pc_index   = None
+_pc_index = None
 
 
 def _oai() -> OpenAI:
@@ -49,11 +49,14 @@ def _index():
     global _pc_index
     if _pc_index is None:
         pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-        _pc_index = pc.Index(os.getenv("PINECONE_INDEX_NAME", "student-budgeting-final-year"))
+        _pc_index = pc.Index(
+            os.getenv("PINECONE_INDEX_NAME", "student-budgeting-final-year")
+        )
     return _pc_index
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 def _fmt_date(raw: Any) -> str:
     if raw is None:
@@ -66,14 +69,14 @@ def _fmt_date(raw: Any) -> str:
 
 def _transaction_to_text(t: dict) -> str:
     """Build a rich natural-language sentence for a transaction."""
-    amount    = float(t.get("amount", 0))
+    amount = float(t.get("amount", 0))
     direction = "credit" if amount >= 0 else "debit"
-    abs_amt   = abs(amount)
-    date      = _fmt_date(t.get("date"))
-    merchant  = (t.get("merchant") or t.get("description") or "Unknown")[:80]
-    category  = t.get("category") or "Other"
-    balance   = t.get("balance")
-    desc      = (t.get("description") or "")[:120]
+    abs_amt = abs(amount)
+    date = _fmt_date(t.get("date"))
+    merchant = (t.get("merchant") or t.get("description") or "Unknown")[:80]
+    category = t.get("category") or "Other"
+    balance = t.get("balance")
+    desc = (t.get("description") or "")[:120]
 
     text = f"£{abs_amt:.2f} {direction} at {merchant} on {date}. Category: {category}."
     if balance is not None:
@@ -85,11 +88,11 @@ def _transaction_to_text(t: dict) -> str:
 
 def _user_profile_to_text(user: dict) -> str:
     """Build a natural-language sentence describing a student's profile."""
-    name       = user.get("name", "User")
+    name = user.get("name", "User")
     university = (user.get("university") or "").strip()
-    year       = (user.get("yearOfStudy") or "").strip()
-    income     = float(user.get("monthlyIncome", 0) or 0)
-    goal       = float(user.get("monthlySpendingGoal", 0) or 0)
+    year = (user.get("yearOfStudy") or "").strip()
+    income = float(user.get("monthlyIncome", 0) or 0)
+    goal = float(user.get("monthlySpendingGoal", 0) or 0)
 
     text = f"Student profile for {name}"
     if university:
@@ -111,6 +114,7 @@ def _embed_batch(texts: list[str]) -> list[list[float]]:
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
+
 def upsert_transactions(transactions: list[dict], user_id: str) -> int:
     """
     Embed and upsert transactions into Pinecone under the user's namespace.
@@ -125,7 +129,7 @@ def upsert_transactions(transactions: list[dict], user_id: str) -> int:
     if not transactions:
         return 0
 
-    texts      = [_transaction_to_text(t) for t in transactions]
+    texts = [_transaction_to_text(t) for t in transactions]
     embeddings = _embed_batch(texts)
 
     vectors = []
@@ -135,15 +139,15 @@ def upsert_transactions(transactions: list[dict], user_id: str) -> int:
             continue
 
         metadata: dict[str, Any] = {
-            "user_id":        user_id,
+            "user_id": user_id,
             "transaction_id": tid,
-            "type":           "transaction",
-            "date":           _fmt_date(t.get("date")),
-            "merchant":       (t.get("merchant") or t.get("description") or "")[:100],
-            "description":    (t.get("description") or "")[:200],
-            "amount":         float(t.get("amount", 0)),
-            "category":       t.get("category") or "Other",
-            "balance":        float(t.get("balance") or 0),
+            "type": "transaction",
+            "date": _fmt_date(t.get("date")),
+            "merchant": (t.get("merchant") or t.get("description") or "")[:100],
+            "description": (t.get("description") or "")[:200],
+            "amount": float(t.get("amount", 0)),
+            "category": t.get("category") or "Other",
+            "balance": float(t.get("balance") or 0),
         }
         vectors.append({"id": f"{user_id}_{tid}", "values": emb, "metadata": metadata})
 
@@ -167,19 +171,19 @@ def upsert_user_profile(user: dict, user_id: str) -> None:
                  monthlyIncome, monthlySpendingGoal.
         user_id: MongoDB ObjectId string — namespace.
     """
-    text  = _user_profile_to_text(user)
+    text = _user_profile_to_text(user)
     [emb] = _embed_batch([text])
 
     vector = {
-        "id":     f"{user_id}_profile",
+        "id": f"{user_id}_profile",
         "values": emb,
         "metadata": {
-            "type":                  "user_profile",
-            "user_id":               user_id,
-            "name":                  user.get("name", ""),
-            "university":            user.get("university", ""),
-            "year_of_study":         user.get("yearOfStudy", ""),
-            "monthly_income":        float(user.get("monthlyIncome", 0) or 0),
+            "type": "user_profile",
+            "user_id": user_id,
+            "name": user.get("name", ""),
+            "university": user.get("university", ""),
+            "year_of_study": user.get("yearOfStudy", ""),
+            "monthly_income": float(user.get("monthlyIncome", 0) or 0),
             "monthly_spending_goal": float(user.get("monthlySpendingGoal", 0) or 0),
         },
     }
@@ -218,7 +222,7 @@ def search_transactions(query: str, user_id: str, top_k: int = 8) -> str:
     if not results.matches:
         return "No matching information found in your history."
 
-    tx_lines      = []
+    tx_lines = []
     profile_lines = []
 
     for match in results.matches:
@@ -233,9 +237,9 @@ def search_transactions(query: str, user_id: str, top_k: int = 8) -> str:
                 f"Spending goal: £{m.get('monthly_spending_goal', 0):.0f}"
             )
         else:
-            amount  = float(m.get("amount", 0))
+            amount = float(m.get("amount", 0))
             abs_amt = abs(amount)
-            flow    = "received" if amount >= 0 else "spent"
+            flow = "received" if amount >= 0 else "spent"
             tx_lines.append(
                 f"• {m.get('date', 'N/A')}: £{abs_amt:.2f} {flow} at "
                 f"{m.get('merchant') or 'Unknown'} "
@@ -249,9 +253,29 @@ def search_transactions(query: str, user_id: str, top_k: int = 8) -> str:
         lines.append("")
 
     if tx_lines:
-        lines.append(f"Found {len(tx_lines)} relevant transaction(s) from your history:")
+        lines.append(
+            f"Found {len(tx_lines)} relevant transaction(s) from your history:"
+        )
         lines.extend(tx_lines)
     elif not profile_lines:
         return "No matching transactions found in your history."
 
     return "\n".join(lines)
+
+
+def delete_user_vectors(user_id: str) -> None:
+    """
+    Delete ALL vectors for a user from their Pinecone namespace.
+    Called when a user deletes their account.
+    """
+    try:
+        idx = _index()
+        # Pinecone namespaces isolate each user's data.
+        # Deleting all vectors in the namespace removes everything for that user.
+        idx.delete(delete_all=True, namespace=user_id)
+        logger.info("[vector_store] deleted all vectors for user %s", user_id)
+    except Exception as exc:
+        logger.warning(
+            "[vector_store] delete_user_vectors failed for %s: %s", user_id, exc
+        )
+        raise

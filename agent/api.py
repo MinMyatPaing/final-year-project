@@ -8,7 +8,7 @@ For route handlers see routers/.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import health, extract, categorize, chat, vectors
+from routers import health, extract, categorize, chat, vectors, report
 
 app = FastAPI(title="StudyBudget Agent API")
 
@@ -29,3 +29,4 @@ app.include_router(extract.router)
 app.include_router(categorize.router)
 app.include_router(chat.router)
 app.include_router(vectors.router)
+app.include_router(report.router)
