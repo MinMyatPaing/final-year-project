@@ -198,7 +198,81 @@ def delete_transaction(transaction_id: str, user_id: str) -> None:
     logger.info("Deleted vector %s for user %s", vector_id, user_id)
 
 
-def search_transactions(query: str, user_id: str, top_k: int = 8) -> str:
+def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
+    """
+    Retrieve up to `top_k` transactions for a user using a broad generic embedding
+    that covers all financial transaction types — including transfers, bank payments,
+    and any other category.  Returns pre-computed totals and a per-category breakdown
+    so the LLM can give accurate aggregate answers even for large transaction sets.
+
+    Args:
+        user_id: Pinecone namespace (MongoDB ObjectId string).
+        top_k:   Maximum vectors to retrieve (default 200 — covers most users).
+
+    Returns:
+        A formatted string with totals, category breakdown and individual rows.
+    """
+    # Deliberately broad query to maximise recall across all transaction types.
+    generic_query = (
+        "financial transaction debit credit payment transfer spending income "
+        "bank statement purchase subscription"
+    )
+    query_emb = _embed_batch([generic_query])[0]
+
+    results = _index().query(
+        vector=query_emb,
+        top_k=top_k,
+        namespace=user_id,
+        include_metadata=True,
+    )
+
+    if not results.matches:
+        return "No transactions found in your history."
+
+    total_debit = 0.0
+    total_credit = 0.0
+    categories: dict[str, float] = {}
+    tx_lines: list[str] = []
+
+    for match in results.matches:
+        m = match.metadata or {}
+        if m.get("type") != "transaction":
+            continue
+
+        amount = float(m.get("amount", 0))
+        abs_amt = abs(amount)
+        flow = "received" if amount >= 0 else "spent"
+        cat = m.get("category") or "Other"
+
+        if amount < 0:
+            total_debit += abs_amt
+            categories[cat] = categories.get(cat, 0) + abs_amt
+        else:
+            total_credit += abs_amt
+
+        tx_lines.append(
+            f"• {m.get('date', 'N/A')}: £{abs_amt:.2f} {flow} at "
+            f"{m.get('merchant') or m.get('description', 'Unknown')} "
+            f"(Category: {cat})"
+        )
+
+    lines: list[str] = [
+        f"Comprehensive transaction history ({len(tx_lines)} transactions retrieved):",
+        f"  Total spent  (outflows): £{total_debit:.2f}",
+        f"  Total received (inflows): £{total_credit:.2f}",
+        "",
+        "Spending breakdown by category:",
+    ]
+    for cat, amt in sorted(categories.items(), key=lambda x: x[1], reverse=True):
+        lines.append(f"  • {cat}: £{amt:.2f}")
+    lines.append("")
+    lines.append("Individual transactions:")
+    lines.extend(tx_lines)
+
+    return "\n".join(lines)
+
+
+def search_transactions(query: str, user_id: str, top_k: int = 20) -> str:
     """
     Semantic search over a user's namespace (transactions + profile).
 

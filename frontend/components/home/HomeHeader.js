@@ -1,62 +1,60 @@
+/**
+ * HomeHeader — controlled month picker.
+ *
+ * Month state lives in the PARENT (home/index.js) so that:
+ *  • SpendingOverview stays in sync with the same selectedYear/selectedMonth
+ *  • After an upload the parent can programmatically navigate to the month
+ *    that contains the uploaded transactions.
+ *
+ * Props:
+ *   user           – auth user object
+ *   transactions   – full transaction array (filtered here for the selected month)
+ *   selectedYear   – controlled year  (integer)
+ *   selectedMonth  – controlled month (0-indexed integer)
+ *   onMonthChange  – (year, month) => void — called on prev/next press
+ */
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { requestNotificationPermission } from '../../utils/budgetNotifications';
 
-// ─── Month helpers ────────────────────────────────────────────────────────────
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-function formatMonthLabel(year, month) {
-  return `${MONTHS[month]} ${year}`;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function HomeHeader({
   user,
   transactions,
+  selectedYear,
+  selectedMonth,
   onMonthChange,
 }) {
   const displayName = user?.name || user?.email?.split('@')[0] || 'Student';
-
-  // ── Selected month state (defaults to current month) ──────────────────────
   const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
-
-  // Notify parent whenever month changes
-  useEffect(() => {
-    onMonthChange?.(selectedYear, selectedMonth);
-  }, [selectedYear, selectedMonth]);
-
-  const goToPrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedYear((y) => y - 1);
-      setSelectedMonth(11);
-    } else {
-      setSelectedMonth((m) => m - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    const isCurrentMonth =
-      selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
-    if (isCurrentMonth) return; // don't go into the future
-    if (selectedMonth === 11) {
-      setSelectedYear((y) => y + 1);
-      setSelectedMonth(0);
-    } else {
-      setSelectedMonth((m) => m + 1);
-    }
-  };
 
   const isCurrentMonth =
     selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
 
-  // ── Filter transactions to selected month ─────────────────────────────────
+  const goToPrevMonth = () => {
+    if (selectedMonth === 0) {
+      onMonthChange?.(selectedYear - 1, 11);
+    } else {
+      onMonthChange?.(selectedYear, selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (isCurrentMonth) return;
+    if (selectedMonth === 11) {
+      onMonthChange?.(selectedYear + 1, 0);
+    } else {
+      onMonthChange?.(selectedYear, selectedMonth + 1);
+    }
+  };
+
+  // Filter transactions to the controlled selected month
   const monthTxns = (transactions || []).filter((t) => {
     const d = new Date(t.date);
     return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
@@ -70,7 +68,7 @@ export default function HomeHeader({
     .filter((t) => parseFloat(t.amount) < 0)
     .reduce((s, t) => s + Math.abs(parseFloat(t.amount)), 0);
 
-  // ── Notification permission state ─────────────────────────────────────────
+  // ── Notification permission ────────────────────────────────────────────────
   const [notifGranted, setNotifGranted] = useState(false);
 
   useEffect(() => {
@@ -100,7 +98,11 @@ export default function HomeHeader({
         ]
       );
     } else {
-      Alert.alert('🔔 Notifications Enabled!', "You'll now get alerts when you're approaching or exceeding your budget limits.", [{ text: 'Great!' }]);
+      Alert.alert(
+        '🔔 Notifications Enabled!',
+        "You'll now get alerts when you're approaching or exceeding your budget limits.",
+        [{ text: 'Great!' }]
+      );
     }
   };
 
@@ -140,7 +142,7 @@ export default function HomeHeader({
           <Ionicons name="chevron-back" size={18} color="rgba(255,255,255,0.7)" />
         </TouchableOpacity>
         <Text className="text-white font-semibold text-sm mx-3">
-          {formatMonthLabel(selectedYear, selectedMonth)}
+          {MONTHS[selectedMonth]} {selectedYear}
         </Text>
         <TouchableOpacity
           onPress={goToNextMonth}
@@ -158,7 +160,7 @@ export default function HomeHeader({
       {/* Spending Card */}
       <View className="bg-white/15 rounded-2xl p-4">
         <Text className="text-indigo-200 text-xs font-medium">
-          Total Spending · {formatMonthLabel(selectedYear, selectedMonth)}
+          Total Spending · {MONTHS[selectedMonth]} {selectedYear}
         </Text>
         <Text className="text-white text-3xl font-bold mt-1">
           £{totalExpenses.toFixed(2)}

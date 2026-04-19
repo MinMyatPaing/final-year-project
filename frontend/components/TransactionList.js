@@ -1,4 +1,4 @@
-import { FlatList, Text, View, TouchableOpacity } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const CATEGORY_CONFIG = {
@@ -11,43 +11,9 @@ const CATEGORY_CONFIG = {
   Other: { icon: 'ellipsis-horizontal-outline', color: '#94a3b8', bg: '#f8fafc' },
 };
 
-const SAMPLE_TRANSACTIONS = [
-  {
-    id: '1',
-    description: 'Tesco Supermarket',
-    amount: -42.5,
-    category: 'Food',
-    date: '2026-02-24',
-  },
-  {
-    id: '2',
-    description: 'Student Loan Installment',
-    amount: 1200.0,
-    category: 'Other',
-    date: '2026-02-22',
-  },
-  {
-    id: '3',
-    description: 'Bus Pass – Monthly',
-    amount: -55.0,
-    category: 'Transport',
-    date: '2026-02-20',
-  },
-  {
-    id: '4',
-    description: 'Netflix Subscription',
-    amount: -15.99,
-    category: 'Entertainment',
-    date: '2026-02-18',
-  },
-  {
-    id: '5',
-    description: 'University Textbooks',
-    amount: -78.0,
-    category: 'Education',
-    date: '2026-02-15',
-  },
-];
+// NOTE: SAMPLE_TRANSACTIONS removed — showing fake data for new users
+// is misleading (it differs from what All Transactions shows).
+// The FlatList ListEmptyComponent handles the zero-state instead.
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -90,12 +56,9 @@ function TransactionItem({ item }) {
 }
 
 export default function TransactionList({ transactions }) {
-  const data =
-    !transactions || transactions.length === 0 ? SAMPLE_TRANSACTIONS : transactions;
-
   return (
     <FlatList
-      data={data}
+      data={transactions || []}
       keyExtractor={(item, idx) => item.id?.toString() || idx.toString()}
       renderItem={({ item }) => <TransactionItem item={item} />}
       scrollEnabled={false}

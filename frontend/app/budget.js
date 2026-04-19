@@ -76,6 +76,16 @@ const BUDGET_CATEGORIES = [
     bg: '#f0fdfa',
     matches: ['personal care'],
   },
+  {
+    // Catch-all: any transaction whose category doesn't match a named
+    // budget above lands here — including the "Other" category from
+    // add-expense.js and any unrecognised AI category labels.
+    label: 'Other',
+    icon: 'ellipsis-horizontal-outline',
+    color: '#94a3b8',
+    bg: '#f8fafc',
+    matches: ['other'],
+  },
 ];
 
 const DEFAULT_LIMITS = {
@@ -87,19 +97,30 @@ const DEFAULT_LIMITS = {
   'Housing & Bills': 500,
   Healthcare: 30,
   'Personal Care': 30,
+  Other: 100,  // catch-all for miscellaneous / "Other" category transactions
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Map a transaction category string to a budget display category label. */
+/**
+ * Map a transaction's category string to a budget display-category label.
+ *
+ * The "Other" entry in BUDGET_CATEGORIES acts as a catch-all: anything that
+ * doesn't match a named category (including transactions explicitly saved with
+ * category "Other" in add-expense.js) maps to 'Other' so it still appears in
+ * the budget totals.  We skip 'Other' in the main loop and use it as the
+ * explicit fallback so it captures both the exact string "other" AND any
+ * unrecognised category label from the AI categoriser.
+ */
 function matchCategory(txnCategory) {
   const lower = (txnCategory || '').toLowerCase().trim();
   for (const cat of BUDGET_CATEGORIES) {
+    if (cat.label === 'Other') continue;   // process catch-all last
     if (cat.matches.some((m) => lower === m || lower.includes(m) || m.includes(lower))) {
       return cat.label;
     }
   }
-  return null; // falls into "Other" — not tracked in a named budget
+  return 'Other'; // catch-all — includes explicit "Other" + unknown AI labels
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -144,9 +165,12 @@ export default function Budget() {
   useEffect(() => {
     AsyncStorage.getItem(BUDGET_LIMITS_KEY).then((val) => {
       if (val) {
-        const saved = JSON.parse(val);
-        setLimits(saved);
-        setEditLimits(saved);
+        // Merge saved limits with DEFAULT_LIMITS so that newly-added
+        // categories (e.g. 'Other') always get a sensible default even
+        // for users who saved their limits before this category existed.
+        const merged = { ...DEFAULT_LIMITS, ...JSON.parse(val) };
+        setLimits(merged);
+        setEditLimits(merged);
       }
     });
   }, []);

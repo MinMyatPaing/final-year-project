@@ -16,7 +16,10 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from flows.vector_store import search_transactions as _vc_search
+from flows.vector_store import (
+    search_transactions as _vc_search,
+    get_all_transactions_summary as _vc_all,
+)
 
 load_dotenv()
 
@@ -50,7 +53,21 @@ Guidelines:
 - Use web_search whenever you need up-to-date facts, local UK information, or anything you are not certain about — do NOT limit web searches to financial topics
 - For financial advice, note you are an AI assistant and suggest consulting a professional for major decisions
 - Remember the conversation history and refer back to it when relevant
-- When a user asks about their own spending or transactions, ALWAYS call search_my_transactions first
+
+IMPORTANT — choosing the right transaction tool:
+- For AGGREGATE / TOTAL questions ("how much did I spend?", "what are my total expenses?",
+  "give me a full breakdown", "did I miss anything?", "what went out of my account?"):
+  → call get_all_my_transactions FIRST — it retrieves up to 200 transactions and returns
+    pre-computed totals so NOTHING is missed, including large bank transfers and payments
+    to other accounts that may not surface in a targeted search.
+- For SPECIFIC / TARGETED questions ("show me my Netflix transactions", "what did I spend
+  at Tesco?", "find my transport costs"):
+  → call search_my_transactions — it is faster for focused queries.
+- NEVER rely solely on search_my_transactions for total-spending or summary questions
+  because it only returns the most semantically similar results and may miss large
+  transfers or infrequent transactions.
+- Any negative-amount transaction (debit) is money that LEFT the account — this includes
+  bank transfers, standing orders, and payments to other accounts.  They count as spending.
 """
 
 # ─── LLM ─────────────────────────────────────────────────────────────────────
@@ -82,18 +99,22 @@ tavily_search = TavilySearchResults(
 )
 
 
-# 2. Transaction History Search (Pinecone RAG)
+# 2. Transaction History Search (Pinecone RAG — targeted / semantic)
 @tool
 def search_my_transactions(query: str) -> str:
     """
     Search the user's personal transaction history using semantic similarity.
-    ALWAYS call this tool first whenever the user asks about their own spending,
-    purchases, income, or finances. For example:
-      - "How much did I spend on food last month?"
+    Best for SPECIFIC / TARGETED queries — finding transactions by merchant,
+    category, or description. Returns the 20 most relevant matches.
+
+    Use this for questions like:
       - "Show me my Uber transactions"
       - "What did I buy at Amazon recently?"
-      - "What's my total entertainment spending?"
-      - "How much money did I receive?"
+      - "Find my Netflix subscription"
+      - "What food purchases did I make?"
+
+    For TOTAL SPENDING or FULL BREAKDOWN questions, use get_all_my_transactions
+    instead — it returns up to 200 transactions including bank transfers.
 
     Args:
         query: Natural language description of what transactions to find.
@@ -111,6 +132,45 @@ def search_my_transactions(query: str) -> str:
         return _vc_search(query, user_id)
     except Exception as exc:
         return f"Unable to search transactions: {exc}"
+
+
+# 2b. Comprehensive transaction summary (all transactions — for aggregate questions)
+@tool
+def get_all_my_transactions(context: str = "") -> str:
+    """
+    Retrieve a COMPREHENSIVE summary of ALL the user's transactions (up to 200),
+    including pre-computed totals and a category-by-category spending breakdown.
+
+    Use this tool for ANY aggregate or total-spending question, for example:
+      - "How much did I spend in total?"
+      - "What are my total expenses this month?"
+      - "Give me a full financial breakdown"
+      - "How much money went out of my account?"
+      - "Did I miss any transactions?"
+      - "What's my biggest expense?"
+      - "How much did I transfer to my other bank?"
+
+    This tool uses a broad retrieval strategy that captures ALL transaction types,
+    including bank transfers, standing orders, large one-off payments, and any
+    transaction whose description or category might not match a targeted search.
+
+    Args:
+        context: Optional extra context, e.g. "April 2026" or "last month".
+                 Pass an empty string to retrieve all transactions regardless of date.
+
+    Returns:
+        Total spent, total received, per-category breakdown, and individual rows.
+    """
+    user_id = _current_user_id.get()
+    if not user_id:
+        return (
+            "Transaction history is unavailable in this session. "
+            "Please ensure you are logged in."
+        )
+    try:
+        return _vc_all(user_id)
+    except Exception as exc:
+        return f"Unable to retrieve transactions: {exc}"
 
 
 # 3. Perplexity Deep Search
@@ -184,7 +244,7 @@ memory = MemorySaver()
 
 agent = create_react_agent(
     model=llm,
-    tools=[search_my_transactions, tavily_search, perplexity_search],
+    tools=[get_all_my_transactions, search_my_transactions, tavily_search, perplexity_search],
     checkpointer=memory,
     prompt=SYSTEM_PROMPT,
 )
