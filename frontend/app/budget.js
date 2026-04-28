@@ -14,6 +14,11 @@ import '../global.css';
 
 const BUDGET_LIMITS_KEY = 'studybudget_limits';
 
+const MONTHS = [
+  'Jan','Feb','Mar','Apr','May','Jun',
+  'Jul','Aug','Sep','Oct','Nov','Dec',
+];
+
 /**
  * Display categories with a list of lowercase aliases that cover both
  * manually-added transactions (add-expense.js) and AI-categorised ones
@@ -161,6 +166,24 @@ export default function Budget() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
 
+  // ─── Month picker (same pattern as Reports / HomeHeader) ─────────────────
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
+  const isCurrentMonth =
+    selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
+
+  const goToPrevMonth = () => {
+    if (selectedMonth === 0) { setSelectedYear((y) => y - 1); setSelectedMonth(11); }
+    else setSelectedMonth((m) => m - 1);
+  };
+  const goToNextMonth = () => {
+    if (isCurrentMonth) return;
+    if (selectedMonth === 11) { setSelectedYear((y) => y + 1); setSelectedMonth(0); }
+    else setSelectedMonth((m) => m + 1);
+  };
+
   // ─── Load persisted limits on mount ──────────────────────────────────────
   useEffect(() => {
     AsyncStorage.getItem(BUDGET_LIMITS_KEY).then((val) => {
@@ -175,10 +198,10 @@ export default function Budget() {
     });
   }, []);
 
-  // ─── Calculate this-month spending per category ───────────────────────────
+  // ─── Calculate selected-month spending per category ──────────────────────
   const { categorySpending, totalSpent, totalBudget, overCategories } = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStart = new Date(selectedYear, selectedMonth, 1);
+    const monthEnd   = new Date(selectedYear, selectedMonth + 1, 1); // exclusive
 
     const spending = {};
     BUDGET_CATEGORIES.forEach((c) => { spending[c.label] = 0; });
@@ -187,7 +210,7 @@ export default function Budget() {
       const amt = parseFloat(t.amount);
       if (isNaN(amt) || amt >= 0) return; // skip income / bad data
       const d = new Date(t.date);
-      if (d < monthStart) return; // only current month
+      if (d < monthStart || d >= monthEnd) return; // only selected month
 
       const cat = matchCategory(t.category);
       if (cat) spending[cat] += Math.abs(amt);
@@ -200,7 +223,7 @@ export default function Budget() {
     );
 
     return { categorySpending: spending, totalSpent, totalBudget, overCategories };
-  }, [transactions, limits]);
+  }, [transactions, limits, selectedYear, selectedMonth]);
 
   const totalPct = Math.min((totalSpent / (totalBudget || 1)) * 100, 100);
 
@@ -286,8 +309,8 @@ export default function Budget() {
 
         {/* ── Monthly Overview Card ──────────────────────────────────────── */}
         <View className="bg-indigo-600 rounded-2xl p-5 mb-5">
-          <View className="flex-row justify-between items-center mb-1">
-            <Text className="text-indigo-200 text-xs font-medium">This Month's Budget</Text>
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-indigo-200 text-xs font-medium">Monthly Budget</Text>
             <TouchableOpacity
               className="bg-white/20 px-3 py-1 rounded-full"
               onPress={() => { setEditLimits(limits); setEditModalVisible(true); }}
@@ -295,6 +318,28 @@ export default function Budget() {
               <Text className="text-white text-xs font-semibold">Edit</Text>
             </TouchableOpacity>
           </View>
+
+          {/* ── Month picker ──────────────────────────────────────────── */}
+          <View className="flex-row items-center justify-center mb-3">
+            <TouchableOpacity onPress={goToPrevMonth} className="p-1.5">
+              <Ionicons name="chevron-back" size={18} color="rgba(255,255,255,0.8)" />
+            </TouchableOpacity>
+            <Text className="text-white font-semibold text-sm mx-4">
+              {MONTHS[selectedMonth]} {selectedYear}
+            </Text>
+            <TouchableOpacity
+              onPress={goToNextMonth}
+              disabled={isCurrentMonth}
+              className="p-1.5"
+            >
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={isCurrentMonth ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.8)'}
+              />
+            </TouchableOpacity>
+          </View>
+
           <Text className="text-white text-3xl font-bold">£{totalBudget.toFixed(0)}</Text>
           <View className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
             <View

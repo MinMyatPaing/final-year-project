@@ -110,6 +110,12 @@ exports.login = async (req, res) => {
 
     const token = createToken(user);
     res.cookie('token', token, cookieOptions());
+
+    // Re-sync the user's profile vector on every login so the AI chat
+    // always has up-to-date context — even after a new-device login or
+    // after the Pinecone index has been cleared/rotated.
+    syncProfileVector(user);
+
     res.json({ success: true, token, user: serializeUser(user) });
   } catch (error) {
     console.error('Login error:', error);

@@ -6,6 +6,7 @@ Claude Sonnet with Tavily + Perplexity web search and per-user conversation memo
 import os
 import httpx
 from contextvars import ContextVar
+from datetime import datetime
 from typing import Annotated
 
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ from langgraph.prebuilt import create_react_agent
 from flows.vector_store import (
     search_transactions as _vc_search,
     get_all_transactions_summary as _vc_all,
+    fetch_user_profile as _vc_fetch_profile,
 )
 
 load_dotenv()
@@ -54,12 +56,27 @@ Guidelines:
 - For financial advice, note you are an AI assistant and suggest consulting a professional for major decisions
 - Remember the conversation history and refer back to it when relevant
 
+IMPORTANT — user profile:
+- When the user asks about their name, university, year of study, income, spending goal, or any
+  personal information, ALWAYS call get_my_profile FIRST.
+- If the profile returns "not synced yet", guide the user to enable AI Personalisation on their
+  Profile page and then log out and back in to trigger the sync.
+
+IMPORTANT — date awareness:
+- Today's date is ALWAYS injected at the start of the user's message as "[Today's date: ...]".
+- Use this to convert relative date references into exact year/month integers:
+    • "this month"   → current month and year from the injected date
+    • "last month"   → month - 1  (if month is January → month = 12, year - 1)
+    • "last year"    → year - 1
+    • "March"        → month = 3, year = current year (or previous year if March is in the past)
+- ALWAYS pass explicit year and month integers to get_all_my_transactions when the user
+  asks about a specific time period.  Never leave year/month as 0 when a period is mentioned.
+
 IMPORTANT — choosing the right transaction tool:
-- For AGGREGATE / TOTAL questions ("how much did I spend?", "what are my total expenses?",
-  "give me a full breakdown", "did I miss anything?", "what went out of my account?"):
-  → call get_all_my_transactions FIRST — it retrieves up to 200 transactions and returns
-    pre-computed totals so NOTHING is missed, including large bank transfers and payments
-    to other accounts that may not surface in a targeted search.
+- For AGGREGATE / TOTAL questions ("how much did I spend?", "what are my total expenses last month?",
+  "give me a full breakdown", "what went out of my account in March?"):
+  → call get_all_my_transactions with the appropriate year/month integers.
+    It retrieves up to 200 transactions and pre-computes totals — NOTHING is missed.
 - For SPECIFIC / TARGETED questions ("show me my Netflix transactions", "what did I spend
   at Tesco?", "find my transport costs"):
   → call search_my_transactions — it is faster for focused queries.
@@ -99,7 +116,43 @@ tavily_search = TavilySearchResults(
 )
 
 
-# 2. Transaction History Search (Pinecone RAG — targeted / semantic)
+# 2. User Profile (direct Pinecone fetch — deterministic, never misses)
+@tool
+def get_my_profile() -> str:
+    """
+    Retrieve the user's personal profile: name, university, year of study,
+    monthly income, and monthly spending goal.
+
+    Call this tool whenever the user:
+      - Asks about their name, university, or year of study
+      - Asks about their spending goal, monthly budget, or income
+      - Says "my profile", "my information", "who am I"
+      - Needs their details to personalise a financial response
+
+    This uses a DIRECT lookup (not semantic search) so it always returns the
+    correct profile data regardless of query phrasing.
+
+    Returns:
+        The user's profile data, or instructions to enable AI Personalisation
+        if the profile has not yet been synced.
+    """
+    user_id = _current_user_id.get()
+    if not user_id:
+        return "Profile unavailable. Please ensure you are logged in."
+    try:
+        profile = _vc_fetch_profile(user_id)
+        if not profile:
+            return (
+                "Your profile has not been synced to the AI system yet. "
+                "To fix this: go to your Profile page, enable 'AI Personalisation', "
+                "then log out and log back in to trigger the sync."
+            )
+        return profile
+    except Exception as exc:
+        return f"Unable to fetch profile: {exc}"
+
+
+# 3. Transaction History Search (Pinecone RAG — targeted / semantic)
 @tool
 def search_my_transactions(query: str) -> str:
     """
@@ -134,29 +187,32 @@ def search_my_transactions(query: str) -> str:
         return f"Unable to search transactions: {exc}"
 
 
-# 2b. Comprehensive transaction summary (all transactions — for aggregate questions)
+# 4. Comprehensive transaction summary (all transactions — for aggregate questions)
 @tool
-def get_all_my_transactions(context: str = "") -> str:
+def get_all_my_transactions(year: int = 0, month: int = 0) -> str:
     """
-    Retrieve a COMPREHENSIVE summary of ALL the user's transactions (up to 200),
-    including pre-computed totals and a category-by-category spending breakdown.
+    Retrieve a COMPREHENSIVE summary of the user's transactions with
+    pre-computed totals and a category-by-category spending breakdown.
 
     Use this tool for ANY aggregate or total-spending question, for example:
-      - "How much did I spend in total?"
-      - "What are my total expenses this month?"
-      - "Give me a full financial breakdown"
+      - "How much did I spend in total?" → year=0, month=0
+      - "What are my total expenses this month?" → pass current year/month
+      - "How much did I spend last month?" → pass last month's year/month
+      - "Give me a full financial breakdown for March" → year=2026, month=3
       - "How much money went out of my account?"
-      - "Did I miss any transactions?"
-      - "What's my biggest expense?"
+      - "What's my biggest expense category?"
       - "How much did I transfer to my other bank?"
 
-    This tool uses a broad retrieval strategy that captures ALL transaction types,
-    including bank transfers, standing orders, large one-off payments, and any
-    transaction whose description or category might not match a targeted search.
+    This tool captures ALL transaction types including bank transfers,
+    standing orders, and large one-off payments.
 
     Args:
-        context: Optional extra context, e.g. "April 2026" or "last month".
-                 Pass an empty string to retrieve all transactions regardless of date.
+        year:  4-digit year to filter by (e.g. 2026). Pass 0 for all years.
+        month: Month number 1-12 (e.g. 3 = March, 4 = April). Pass 0 for all months.
+
+    IMPORTANT: Today's date is always at the start of the user's message.
+    Convert "this month", "last month", etc. into exact year/month integers
+    BEFORE calling this tool.
 
     Returns:
         Total spent, total received, per-category breakdown, and individual rows.
@@ -168,12 +224,12 @@ def get_all_my_transactions(context: str = "") -> str:
             "Please ensure you are logged in."
         )
     try:
-        return _vc_all(user_id)
+        return _vc_all(user_id, year=year, month=month)
     except Exception as exc:
         return f"Unable to retrieve transactions: {exc}"
 
 
-# 3. Perplexity Deep Search
+# 5. Perplexity Deep Search
 @tool
 def perplexity_search(query: str) -> str:
     """
@@ -244,7 +300,13 @@ memory = MemorySaver()
 
 agent = create_react_agent(
     model=llm,
-    tools=[get_all_my_transactions, search_my_transactions, tavily_search, perplexity_search],
+    tools=[
+        get_my_profile,
+        get_all_my_transactions,
+        search_my_transactions,
+        tavily_search,
+        perplexity_search,
+    ],
     checkpointer=memory,
     prompt=SYSTEM_PROMPT,
 )
@@ -267,13 +329,18 @@ async def chat(message: str, session_id: str) -> str:
     Returns:
         The agent's text response.
     """
-    # Bind user_id so the search_my_transactions tool can filter by namespace.
+    # Bind user_id so tools can scope queries to this user's Pinecone namespace.
     _current_user_id.set(session_id)
 
     config = {"configurable": {"thread_id": session_id}}
 
+    # Inject today's date so the agent can correctly resolve relative time
+    # references like "last month", "this week", "yesterday", etc.
+    today_str = datetime.now().strftime("%A, %d %B %Y")  # e.g. "Monday, 28 April 2026"
+    dated_message = f"[Today's date: {today_str}]\n\n{message}"
+
     result = await agent.ainvoke(
-        {"messages": [HumanMessage(content=message)]},
+        {"messages": [HumanMessage(content=dated_message)]},
         config=config,
     )
 

@@ -18,7 +18,8 @@ Text format embedded per user profile:
 
 import os
 import logging
-from typing import Any
+from datetime import datetime
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -65,6 +66,30 @@ def _fmt_date(raw: Any) -> str:
         return raw.strftime("%d %b %Y")
     s = str(raw)
     return s[:10] if len(s) >= 10 else s
+
+
+def _parse_metadata_date(date_str: str) -> Optional[datetime]:
+    """
+    Parse a date string stored in Pinecone metadata into a datetime object.
+    Handles ISO format ("2026-03-15" or full ISO timestamp) and display
+    format ("15 Mar 2026" / "15 March 2026").
+    Returns None if the string cannot be parsed.
+    """
+    if not date_str or date_str in ("unknown date", "N/A", ""):
+        return None
+    s = date_str.strip()
+    # ISO format — may be full ISO timestamp; first 10 chars give YYYY-MM-DD
+    try:
+        return datetime.strptime(s[:10], "%Y-%m-%d")
+    except ValueError:
+        pass
+    # Display formats set by _fmt_date
+    for fmt in ("%d %b %Y", "%d %B %Y"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
 
 
 def _transaction_to_text(t: dict) -> str:
@@ -198,16 +223,24 @@ def delete_transaction(transaction_id: str, user_id: str) -> None:
     logger.info("Deleted vector %s for user %s", vector_id, user_id)
 
 
-def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
+def get_all_transactions_summary(
+    user_id: str,
+    year: int = 0,
+    month: int = 0,
+    top_k: int = 200,
+) -> str:
     """
     Retrieve up to `top_k` transactions for a user using a broad generic embedding
     that covers all financial transaction types — including transfers, bank payments,
-    and any other category.  Returns pre-computed totals and a per-category breakdown
-    so the LLM can give accurate aggregate answers even for large transaction sets.
+    and any other category.  Optionally filter results to a specific year/month
+    (applied in Python after Pinecone retrieval, so large top_k values are used
+    to maximise recall before filtering).
 
     Args:
         user_id: Pinecone namespace (MongoDB ObjectId string).
-        top_k:   Maximum vectors to retrieve (default 200 — covers most users).
+        year:    4-digit calendar year to filter by (e.g. 2026). 0 = all years.
+        month:   Month number 1-12 to filter by (e.g. 3 = March). 0 = all months.
+        top_k:   Maximum vectors to retrieve from Pinecone (default 200).
 
     Returns:
         A formatted string with totals, category breakdown and individual rows.
@@ -229,6 +262,15 @@ def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
     if not results.matches:
         return "No transactions found in your history."
 
+    # Human-readable period label used in the output header
+    if year and month:
+        from calendar import month_name as _month_name
+        period_label = f" for {_month_name[month]} {year}"
+    elif year:
+        period_label = f" for {year}"
+    else:
+        period_label = ""
+
     total_debit = 0.0
     total_credit = 0.0
     categories: dict[str, float] = {}
@@ -238,6 +280,16 @@ def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
         m = match.metadata or {}
         if m.get("type") != "transaction":
             continue
+
+        # ── Date filter (post-retrieval, in Python) ────────────────────────
+        if year or month:
+            dt = _parse_metadata_date(m.get("date", ""))
+            if dt is None:
+                continue  # unparseable date — skip to be safe
+            if year and dt.year != year:
+                continue
+            if month and dt.month != month:
+                continue
 
         amount = float(m.get("amount", 0))
         abs_amt = abs(amount)
@@ -256,8 +308,11 @@ def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
             f"(Category: {cat})"
         )
 
+    if not tx_lines:
+        return f"No transactions found{period_label}."
+
     lines: list[str] = [
-        f"Comprehensive transaction history ({len(tx_lines)} transactions retrieved):",
+        f"Transaction history{period_label} ({len(tx_lines)} transactions):",
         f"  Total spent  (outflows): £{total_debit:.2f}",
         f"  Total received (inflows): £{total_credit:.2f}",
         "",
@@ -270,6 +325,45 @@ def get_all_transactions_summary(user_id: str, top_k: int = 200) -> str:
     lines.extend(tx_lines)
 
     return "\n".join(lines)
+
+
+def fetch_user_profile(user_id: str) -> str:
+    """
+    Directly fetch the user's profile vector from Pinecone using its known ID
+    (`{user_id}_profile`).  Unlike `search_transactions`, this is a deterministic
+    lookup — it never misses the profile due to a low semantic similarity score.
+
+    Args:
+        user_id: MongoDB ObjectId string — namespace and vector ID prefix.
+
+    Returns:
+        A formatted profile string, or an empty string if not found.
+    """
+    try:
+        result = _index().fetch(ids=[f"{user_id}_profile"], namespace=user_id)
+        if not result.vectors:
+            return ""
+        v = result.vectors.get(f"{user_id}_profile")
+        if not v or not v.metadata:
+            return ""
+        m = v.metadata
+        lines = ["Your profile:"]
+        if m.get("name"):
+            lines.append(f"  • Name: {m['name']}")
+        if m.get("university"):
+            lines.append(f"  • University: {m['university']}")
+        if m.get("year_of_study"):
+            lines.append(f"  • Year of Study: {m['year_of_study']}")
+        inc = float(m.get("monthly_income", 0) or 0)
+        if inc:
+            lines.append(f"  • Monthly Income: £{inc:.0f}")
+        goal = float(m.get("monthly_spending_goal", 0) or 0)
+        if goal:
+            lines.append(f"  • Monthly Spending Goal: £{goal:.0f}")
+        return "\n".join(lines)
+    except Exception as exc:
+        logger.warning("fetch_user_profile failed for %s: %s", user_id, exc)
+        return ""
 
 
 def search_transactions(query: str, user_id: str, top_k: int = 20) -> str:
@@ -305,6 +399,7 @@ def search_transactions(query: str, user_id: str, top_k: int = 20) -> str:
         if m.get("type") == "user_profile":
             profile_lines.append(
                 f"• [Your Profile] "
+                f"Name: {m.get('name') or 'N/A'}, "
                 f"University: {m.get('university') or 'N/A'}, "
                 f"Year: {m.get('year_of_study') or 'N/A'}, "
                 f"Monthly income: £{m.get('monthly_income', 0):.0f}, "
