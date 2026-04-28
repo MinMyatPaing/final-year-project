@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as SecureStore from 'expo-secure-store';
 
-const TOKEN_KEY = 'studybudget_token';
+const TOKEN_KEY = 'pocketwise_token';
 
 // ─── Secure storage helpers ───────────────────────────────────────────────────
 export async function saveToken(token) {

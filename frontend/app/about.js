@@ -20,14 +20,14 @@ export default function About() {
           <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center mb-3">
             <Ionicons name="wallet" size={32} color="white" />
           </View>
-          <Text className="text-white text-2xl font-bold">StudyBudget</Text>
+          <Text className="text-white text-2xl font-bold">PocketWise</Text>
           <Text className="text-indigo-200 text-sm mt-1">Version 1.0.0</Text>
         </View>
         {/* Description */}
         <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-          <Text className="text-slate-800 font-bold text-sm mb-2">What is StudyBudget?</Text>
+          <Text className="text-slate-800 font-bold text-sm mb-2">What is PocketWise?</Text>
           <Text className="text-slate-500 text-sm leading-5">
-            StudyBudget is a smart personal finance app designed specifically for university students. It helps you track spending, understand your financial habits, and get AI-powered budgeting advice — all in one place.
+            PocketWise is a smart personal finance app designed specifically for university students. It helps you track spending, understand your financial habits, and get AI-powered budgeting advice — all in one place.
           </Text>
         </View>
         {/* Features */}

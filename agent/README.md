@@ -1,6 +1,6 @@
-# Bank Statement Agent API
+# PocketWise — Agent API
 
-A FastAPI service that extracts transactions from bank statement PDFs and categorizes them using AI agents.
+A FastAPI service that powers the AI features of PocketWise: extracting transactions from bank statement PDFs, categorising them using Claude, managing Pinecone vector storage for RAG, and serving the conversational AI chat assistant.
 
 ## Features
 

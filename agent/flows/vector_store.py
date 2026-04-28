@@ -51,7 +51,7 @@ def _index():
     if _pc_index is None:
         pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
         _pc_index = pc.Index(
-            os.getenv("PINECONE_INDEX_NAME", "student-budgeting-final-year")
+            os.getenv("PINECONE_INDEX_NAME", "pocketwise")
         )
     return _pc_index
 

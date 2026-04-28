@@ -1,7 +1,7 @@
 {
-  "name": "student-budgeting-backend",
+  "name": "pocketwise-backend",
   "version": "1.0.0",
-  "description": "Backend server for Student Budgeting App",
+  "description": "Backend server for PocketWise — AI-powered student budgeting app",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -31,7 +31,7 @@ _current_user_id: ContextVar[str] = ContextVar("current_user_id", default="")
 
 # ─── System Prompt ────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are StudyBudget AI, a helpful and friendly assistant for university students in the UK.
+SYSTEM_PROMPT = """You are PocketWise AI, a helpful and friendly assistant for university students in the UK.
 
 Your primary role is helping students manage their finances, but you are a general-purpose assistant
 who can answer any question a UK student might have.
@@ -316,7 +316,7 @@ agent = create_react_agent(
 
 async def chat(message: str, session_id: str) -> str:
     """
-    Send a message to the StudyBudget AI agent and return its response.
+    Send a message to the PocketWise AI agent and return its response.
 
     Each unique session_id gets its own conversation thread with memory.
     Use the authenticated user's MongoDB ObjectId as session_id so it matches

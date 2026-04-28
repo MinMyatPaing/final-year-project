@@ -33,13 +33,13 @@ const SECTIONS = [
     title: 'Your Rights',
     icon: 'person-circle-outline',
     color: '#8b5cf6',
-    body: 'You may request deletion of your account and all associated data at any time by contacting support@studybudget.app. We will process your request within 30 days.',
+    body: 'You may request deletion of your account and all associated data at any time by contacting support@pocketwise.app. We will process your request within 30 days.',
   },
   {
     title: 'Cookies & Tracking',
     icon: 'eye-off-outline',
     color: '#ec4899',
-    body: 'StudyBudget does not use advertising trackers or third-party analytics cookies. Secure tokens are stored locally on your device using the OS keychain.',
+    body: 'PocketWise does not use advertising trackers or third-party analytics cookies. Secure tokens are stored locally on your device using the OS keychain.',
   },
 ];
 
@@ -76,7 +76,7 @@ export default function Privacy() {
         <View className="bg-white rounded-xl p-4 mb-8 shadow-sm">
           <Text className="text-slate-800 font-semibold text-sm mb-1">Contact Us</Text>
           <Text className="text-slate-500 text-sm leading-5">
-            Privacy enquiries: <Text className="text-indigo-600">privacy@studybudget.app</Text>
+            Privacy enquiries: <Text className="text-indigo-600">privacy@pocketwise.app</Text>
           </Text>
         </View>
       </ScrollView>

@@ -12,7 +12,7 @@ import '../global.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const BUDGET_LIMITS_KEY = 'studybudget_limits';
+const BUDGET_LIMITS_KEY = 'pocketwise_limits';
 
 const MONTHS = [
   'Jan','Feb','Mar','Apr','May','Jun',

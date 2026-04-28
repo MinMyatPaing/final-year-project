@@ -1,5 +1,5 @@
 """
-Entry point — run this file to start the StudyBudget Agent API server.
+Entry point — run this file to start the PocketWise Agent API server.
 
     uv run main.py
     # or

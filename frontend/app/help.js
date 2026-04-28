@@ -41,7 +41,7 @@ export default function HelpCentre() {
           <Text className="text-slate-800 font-semibold text-sm mb-1">Contact Support</Text>
           <Text className="text-slate-500 text-sm leading-5">
             For further assistance, email us at{' '}
-            <Text className="text-indigo-600">support@studybudget.app</Text>
+            <Text className="text-indigo-600">support@pocketwise.app</Text>
           </Text>
         </View>
       </ScrollView>

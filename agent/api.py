@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers import health, extract, categorize, chat, vectors, report
 
-app = FastAPI(title="StudyBudget Agent API")
+app = FastAPI(title="PocketWise Agent API")
 
 # ─── Middleware ───────────────────────────────────────────────────────────────
 

@@ -91,7 +91,7 @@ export default function Reports() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
-          dialogTitle: `StudyBudget Report — ${MONTHS[selectedMonth]} ${selectedYear}`,
+          dialogTitle: `PocketWise Report — ${MONTHS[selectedMonth]} ${selectedYear}`,
         });
       } else {
         Alert.alert('Saved', `PDF saved to: ${uri}`);

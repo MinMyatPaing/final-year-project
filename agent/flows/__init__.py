@@ -1,5 +1,5 @@
 """
-LangGraph flows for StudyBudget Agent.
+LangGraph flows for PocketWise Agent.
 Re-exported here for clean imports in routers/.
 """
 

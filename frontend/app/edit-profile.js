@@ -196,7 +196,7 @@ export default function EditProfile() {
                   📊 AI Personalisation
                 </Text>
                 <Text className="text-indigo-600 text-xs leading-relaxed">
-                  When enabled, StudyBudget AI uses your academic year, university, and
+                  When enabled, PocketWise AI uses your academic year, university, and
                   financial goals to give you more relevant advice. Your profile is stored
                   securely and is never shared externally.
                 </Text>

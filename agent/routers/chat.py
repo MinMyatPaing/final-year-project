@@ -10,7 +10,7 @@ router = APIRouter(tags=["Chat"])
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """
-    Chat with the StudyBudget AI assistant.
+    Chat with the PocketWise AI assistant.
 
     Each session_id maintains its own conversation memory.
     Pass the authenticated user's ID as session_id for per-user persistence.

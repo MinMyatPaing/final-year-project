@@ -1,5 +1,5 @@
 """
-Pydantic request and response models for the StudyBudget Agent API.
+Pydantic request and response models for the PocketWise Agent API.
 """
 
 from pydantic import BaseModel

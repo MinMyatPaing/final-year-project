@@ -9,7 +9,7 @@ import * as SecureStore from 'expo-secure-store';
 // ↑ Update .env.local → EXPO_PUBLIC_API_URL when your WiFi/IP changes
 export const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.130.171.15:3000';
 
-const TOKEN_KEY = 'studybudget_token';
+const TOKEN_KEY = 'pocketwise_token';
 
 // ─── In-memory token cache ───────────────────────────────────────────────────
 // SecureStore.setItemAsync is async (fire-and-forget in the reducer).

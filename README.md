@@ -1,4 +1,4 @@
-# StudyBudget — AI-Powered Student Budgeting App
+# PocketWise — AI-Powered Student Budgeting App
 
 A full-stack budgeting application built for university students. It combines a React Native mobile frontend, an Express.js REST API backend, and a Python AI agent service to help students track spending, upload bank statements, categorise transactions automatically, and chat with a personal finance AI.
 
@@ -72,7 +72,7 @@ A full-stack budgeting application built for university students. It combines a 
 - **uv** — fast Python package manager (`brew install uv` or `pip install uv`)
 - **Expo Go** app on your phone (or an iOS/Android simulator)
 - **MongoDB Atlas** cluster (free tier is fine)
-- **Pinecone** account — create a serverless index named `student-budgeting-final-year` with **1536 dimensions** and cosine metric
+- **Pinecone** account — create a serverless index named `pocketwise` with **1536 dimensions** and cosine metric
 - API keys — see Environment Variables below
 
 ---
@@ -133,7 +133,7 @@ Create `backend/.env`:
 
 ```env
 PORT=3000
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/studybudget
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/pocketwise
 JWT_SECRET=your_jwt_secret_here
 AGENT_API_URL=http://localhost:8000
 ```
@@ -166,7 +166,7 @@ OPENAI_API_KEY=sk-proj-...
 
 # Pinecone — vector storage
 PINECONE_API_KEY=pcsk_...
-PINECONE_INDEX_NAME=student-budgeting-final-year
+PINECONE_INDEX_NAME=pocketwise
 
 # Tavily — web search tool (optional but recommended)
 TAVILY_API_KEY=tvly-...

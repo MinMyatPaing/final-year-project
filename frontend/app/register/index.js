@@ -217,7 +217,7 @@ export default function Register() {
                         📊 AI Personalisation
                       </Text>
                       <Text className="text-indigo-600 text-xs leading-relaxed">
-                        Allow StudyBudget AI to use your academic year, university, and
+                        Allow PocketWise AI to use your academic year, university, and
                         financial goals to give personalised advice. Your data is stored
                         securely and used only within this app. You can change this at
                         any time in your profile settings.

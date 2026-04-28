@@ -16,8 +16,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Constants (mirror budget.js) ────────────────────────────────────────────
 
-const BUDGET_LIMITS_KEY   = 'studybudget_limits';
-const NOTIF_SENT_KEY      = 'studybudget_notifs_sent';
+const BUDGET_LIMITS_KEY   = 'pocketwise_limits';
+const NOTIF_SENT_KEY      = 'pocketwise_notifs_sent';
 
 const DEFAULT_LIMITS = {
   'Food & Dining':   150,

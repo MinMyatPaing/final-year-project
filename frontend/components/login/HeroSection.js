@@ -8,7 +8,7 @@ export default function HeroSection() {
         <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center mb-4">
           <Ionicons name="wallet" size={32} color="white" />
         </View>
-        <Text className="text-white text-3xl font-bold tracking-tight">StudyBudget</Text>
+        <Text className="text-white text-3xl font-bold tracking-tight">PocketWise</Text>
         <Text className="text-indigo-200 text-sm mt-1">Smart finance for students</Text>
       </View>
     </View>
