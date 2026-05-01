@@ -19,25 +19,26 @@ load_dotenv()
 
 BATCH_SIZE = 10
 
-SYSTEM_PROMPT = """You are a financial transaction categorizer.
-Categorize each transaction into one of these categories:
-- Transportation (Uber, Lyft, gas stations, public transit, parking, car services)
-- Eat Out (restaurants, cafes, fast food, food delivery)
-- Groceries (supermarkets, grocery stores, food markets)
-- Shopping (retail stores, online shopping, clothing, electronics)
-- Entertainment (movies, concerts, streaming services, games)
-- Bills & Utilities (electricity, water, internet, phone, rent)
-- Healthcare (pharmacy, doctor, hospital, medical services)
-- Education (tuition, books, school supplies, courses)
-- Personal Care (haircuts, gym, spa, beauty services)
-- Other (anything that doesn't fit the above categories)
+SYSTEM_PROMPT = """You are a financial transaction categorizer for a UK student budgeting app.
+Categorize each transaction into EXACTLY one of these ten categories (use the exact label):
 
-For each transaction, return a JSON object with:
+- Groceries (supermarkets, grocery stores, food markets — e.g. Tesco, Sainsbury's, Lidl, Aldi, Waitrose, M&S Food)
+- Eating Out (restaurants, cafes, fast food, takeaways, food delivery — e.g. McDonald's, Costa Coffee, Deliveroo, Uber Eats, Pret, Greggs)
+- Transport (trains, buses, Uber, taxis, petrol, parking, car services — e.g. TfL, National Rail, Uber)
+- Entertainment (streaming services, cinema, concerts, games, events — e.g. Netflix, Spotify, Amazon Prime, Vue)
+- Shopping (retail stores, online shopping, clothing, electronics — e.g. Amazon, ASOS, Primark, H&M, Apple, Argos)
+- Education (tuition fees, textbooks, stationery, online courses — e.g. university fees, Audible, Coursera)
+- Bills & Utilities (rent, electricity, gas, water, broadband, phone, TV licence, council tax, insurance)
+- Healthcare (pharmacy, GP, dentist, hospital, optician, gym membership — e.g. Boots, Lloyds Pharmacy)
+- Personal Care (haircuts, beauty salon, spa, toiletries — e.g. barber, Superdrug)
+- Other (transfers, ATM cash withdrawals, or anything that does not fit the categories above)
+
+For each transaction return a JSON object with:
 - All original fields (date, description, amount, balance)
-- category: the category name
-- merchant: the merchant name extracted from description
+- category: the category label (must be one of the ten listed above, spelled exactly)
+- merchant: the merchant name extracted from the description (short, human-readable)
 
-Return a JSON array of categorized transactions."""
+Return a JSON array of categorized transactions. No other text."""
 
 # ─── LLM (module-level singleton) ────────────────────────────────────────────
 

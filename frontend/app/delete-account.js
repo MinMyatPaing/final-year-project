@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform, Modal,
+  TextInput, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +18,6 @@ export default function DeleteAccount() {
   const { user } = useSelector((s) => s.auth);
 
   const [emailInput, setEmailInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Snapshot the user details at mount time so they don't disappear
@@ -53,62 +52,31 @@ export default function DeleteAccount() {
     );
   };
 
-  const confirmDelete = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await apiClient.delete('/api/auth/account', {
-        data: { email: emailInput.trim() },
-        timeout: 60_000, // override the default 30s — deletion can take a moment
+  const confirmDelete = () => {
+    // Fire the API call in the background — do NOT await.
+    // The backend responds immediately (it deletes the User document and
+    // replies before the Pinecone + transaction cleanup runs).
+    // We navigate away without waiting so the user is never stuck on a
+    // loading screen.
+    apiClient
+      .delete('/api/auth/account', { data: { email: emailInput.trim() } })
+      .catch((err) => {
+        // Silent fail — user is already logged out and on the login screen.
+        // The server still deletes the user document synchronously, so login
+        // will be blocked even if this request was somehow missed.
+        console.warn('[delete-account] background deletion error:', err.message);
       });
-      // Dispatch logout AFTER the API call succeeds so the user snapshot
-      // stays intact throughout the loading phase.
-      dispatch(logoutUser());
-    } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Failed to delete account.';
-      setError(msg);
-      setLoading(false);
-    }
-    // Note: we intentionally do NOT setLoading(false) on success —
-    // the screen will unmount as the router redirects to login.
+
+    // Immediately clear auth state → auth guard redirects to /login.
+    dispatch(logoutUser());
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      {/* Full-screen loading overlay — blocks all interaction during deletion */}
-      <Modal visible={loading} transparent animationType="fade" statusBarTranslucent>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.55)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 20,
-              padding: 32,
-              alignItems: 'center',
-              marginHorizontal: 40,
-            }}
-          >
-            <ActivityIndicator size="large" color="#f43f5e" />
-            <Text style={{ color: '#1e293b', fontWeight: '700', fontSize: 16, marginTop: 16 }}>
-              Deleting account…
-            </Text>
-            <Text style={{ color: '#94a3b8', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-              Please wait. Do not close the app.{'\n'}This may take up to 30 seconds.
-            </Text>
-          </View>
-        </View>
-      </Modal>
-
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View className="flex-row items-center px-5 pt-2 pb-4">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1" disabled={loading}>
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
             <Ionicons name="arrow-back" size={22} color="#4f46e5" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-slate-800">Delete Account</Text>
@@ -195,7 +163,7 @@ export default function DeleteAccount() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                editable={!loading}
+                editable
                 returnKeyType="done"
               />
               {error ? (
@@ -209,7 +177,6 @@ export default function DeleteAccount() {
             {/* Delete button */}
             <TouchableOpacity
               onPress={handleDelete}
-              disabled={loading}
               className="bg-rose-500 rounded-2xl py-4 items-center flex-row justify-center mb-4"
               activeOpacity={0.8}
             >
@@ -222,7 +189,6 @@ export default function DeleteAccount() {
             {/* Cancel */}
             <TouchableOpacity
               onPress={() => router.back()}
-              disabled={loading}
               className="items-center py-3"
             >
               <Text className="text-slate-400 text-sm">Cancel — keep my account</Text>

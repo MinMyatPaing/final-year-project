@@ -20,17 +20,25 @@ const MONTHS = [
 ];
 
 /**
- * Display categories with a list of lowercase aliases that cover both
- * manually-added transactions (add-expense.js) and AI-categorised ones
- * (categorize_agent.py).
+ * Budget categories — labels match the Transaction.js enum exactly so that
+ * category spending totals line up with stored transaction data.
+ * The matches array keeps a few legacy aliases (e.g. 'food', 'housing') so
+ * that any transactions stored before this update still count correctly.
  */
 const BUDGET_CATEGORIES = [
   {
-    label: 'Food & Dining',
-    icon: 'fast-food-outline',
+    label: 'Groceries',
+    icon: 'cart-outline',
     color: '#6366f1',
     bg: '#eef2ff',
-    matches: ['food', 'groceries', 'eat out', 'eating out'],
+    matches: ['groceries', 'food'],
+  },
+  {
+    label: 'Eating Out',
+    icon: 'restaurant-outline',
+    color: '#f97316',
+    bg: '#fff7ed',
+    matches: ['eating out', 'eat out'],
   },
   {
     label: 'Transport',
@@ -61,18 +69,18 @@ const BUDGET_CATEGORIES = [
     matches: ['education'],
   },
   {
-    label: 'Housing & Bills',
+    label: 'Bills & Utilities',
     icon: 'home-outline',
     color: '#8b5cf6',
     bg: '#f5f3ff',
-    matches: ['housing', 'bills & utilities', 'bills', 'utilities'],
+    matches: ['bills & utilities', 'housing', 'bills', 'utilities'],
   },
   {
     label: 'Healthcare',
     icon: 'heart-outline',
     color: '#ec4899',
     bg: '#fdf2f8',
-    matches: ['health', 'healthcare'],
+    matches: ['healthcare', 'health'],
   },
   {
     label: 'Personal Care',
@@ -82,9 +90,7 @@ const BUDGET_CATEGORIES = [
     matches: ['personal care'],
   },
   {
-    // Catch-all: any transaction whose category doesn't match a named
-    // budget above lands here — including the "Other" category from
-    // add-expense.js and any unrecognised AI category labels.
+    // Catch-all: anything that doesn't match a named budget above.
     label: 'Other',
     icon: 'ellipsis-horizontal-outline',
     color: '#94a3b8',
@@ -94,15 +100,16 @@ const BUDGET_CATEGORIES = [
 ];
 
 const DEFAULT_LIMITS = {
-  'Food & Dining': 150,
-  Transport: 60,
-  Entertainment: 40,
-  Shopping: 80,
-  Education: 50,
-  'Housing & Bills': 500,
-  Healthcare: 30,
-  'Personal Care': 30,
-  Other: 100,  // catch-all for miscellaneous / "Other" category transactions
+  Groceries:           150,
+  'Eating Out':         80,
+  Transport:            60,
+  Entertainment:        40,
+  Shopping:             80,
+  Education:            50,
+  'Bills & Utilities': 500,
+  Healthcare:           30,
+  'Personal Care':      30,
+  Other:                50,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

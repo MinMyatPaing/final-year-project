@@ -9,37 +9,37 @@ const SECTIONS = [
     title: 'Data We Collect',
     icon: 'server-outline',
     color: '#6366f1',
-    body: 'We collect your name, email address, and financial transaction data that you upload via bank statements. No bank login credentials are ever stored.',
+    body: 'We collect your name, email address, university details, financial goals (monthly income and spending goal), and the transaction data extracted from the bank statements you upload. No bank login credentials are ever requested or stored.',
   },
   {
-    title: 'How We Use Your Data',
-    icon: 'analytics-outline',
+    title: 'How Bank Statements Are Processed',
+    icon: 'document-text-outline',
     color: '#06b6d4',
-    body: 'Your transaction data is used solely to power spending insights and AI-assisted budgeting advice within the app. We do not sell or share your data with third parties.',
-  },
-  {
-    title: 'Data Storage & Security',
-    icon: 'shield-checkmark-outline',
-    color: '#10b981',
-    body: 'All data is stored in an encrypted MongoDB database. Passwords are hashed using bcrypt. API access is protected with signed JWT tokens that expire after 7 days.',
+    body: 'When you upload a bank statement PDF, it is converted into page images in memory on our server. These images are then sent to the Anthropic Claude API for transaction extraction. The original PDF and all page images are discarded immediately afterwards — they are never written to permanent storage.',
   },
   {
     title: 'AI & Third-Party Services',
     icon: 'chatbubble-ellipses-outline',
     color: '#f59e0b',
-    body: 'The AI assistant is powered by OpenAI GPT-4o. When you chat, your message and a summary of your spending context may be sent to OpenAI for processing. Refer to OpenAI\'s privacy policy for details.',
+    body: 'PocketWise uses the following third-party AI services (only when you have given consent):\n\n• Anthropic Claude — bank statement page images are sent for transaction extraction; transaction descriptions are sent for categorisation and report generation; your spending context is sent for AI chat responses.\n\n• Pinecone — your transactions are stored as semantic vector embeddings to power the AI chat assistant\'s memory of your spending history.\n\n• OpenAI — used only to generate the numerical embeddings stored in Pinecone; your text is not used for model training.\n\nAnthropic\'s enterprise API does not use customer data to train its models. You can withdraw your AI consent at any time in Profile → Settings.',
   },
   {
-    title: 'Your Rights',
+    title: 'Data Storage & Security',
+    icon: 'shield-checkmark-outline',
+    color: '#10b981',
+    body: 'Your account and transaction data is stored in MongoDB Atlas, which encrypts data at rest using AES-256. Passwords are never stored in plain text — they are hashed using bcrypt before saving. Your login token is stored in your device\'s hardware-backed secure keychain (iOS Keychain / Android Keystore), not in plain app storage. Transaction embeddings are stored in Pinecone, which also encrypts data at rest. All communication between the app and our servers uses HTTPS/TLS.',
+  },
+  {
+    title: 'Your Rights & Data Deletion',
     icon: 'person-circle-outline',
     color: '#8b5cf6',
-    body: 'You may request deletion of your account and all associated data at any time by contacting support@pocketwise.app. We will process your request within 30 days.',
+    body: 'You have the right to delete your account and all associated data at any time. To do so, go to Profile → Delete Account. This will permanently remove your account from our database, all your transaction records, and all your vector embeddings from Pinecone. Deletion is immediate and irreversible. You also have the right to withdraw AI personalisation consent at any time from your profile settings, without deleting your account.',
   },
   {
-    title: 'Cookies & Tracking',
+    title: 'No Advertising or Tracking',
     icon: 'eye-off-outline',
     color: '#ec4899',
-    body: 'PocketWise does not use advertising trackers or third-party analytics cookies. Secure tokens are stored locally on your device using the OS keychain.',
+    body: 'PocketWise does not use advertising networks, third-party analytics trackers, or behavioural profiling. We do not sell your data. Your financial data is used solely to provide the features of this app to you.',
   },
 ];
 
@@ -59,7 +59,7 @@ export default function Privacy() {
           <Ionicons name="lock-closed-outline" size={28} color="#4f46e5" />
           <View className="ml-3 flex-1">
             <Text className="text-indigo-800 font-bold text-base">Your data, your control</Text>
-            <Text className="text-indigo-500 text-sm">Last updated: February 2026</Text>
+            <Text className="text-indigo-500 text-sm">Last updated: April 2026</Text>
           </View>
         </View>
 
@@ -76,7 +76,8 @@ export default function Privacy() {
         <View className="bg-white rounded-xl p-4 mb-8 shadow-sm">
           <Text className="text-slate-800 font-semibold text-sm mb-1">Contact Us</Text>
           <Text className="text-slate-500 text-sm leading-5">
-            Privacy enquiries: <Text className="text-indigo-600">privacy@pocketwise.app</Text>
+            Privacy enquiries:{' '}
+            <Text className="text-indigo-600">privacy@pocketwise.app</Text>
           </Text>
         </View>
       </ScrollView>

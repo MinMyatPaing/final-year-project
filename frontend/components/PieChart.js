@@ -1,27 +1,18 @@
 import { View, Text, Dimensions } from 'react-native';
 import { PieChart as Chart } from 'react-native-chart-kit';
 
-/**
- * Covers both manually-added categories (add-expense.js) and
- * AI-categorised ones (categorize_agent.py).
- */
+// Single canonical colour map — matches Transaction.js enum exactly.
 const CATEGORY_COLORS = {
-  // Manual (add-expense.js)
-  Food:             '#6366f1',
-  Transport:        '#22d3ee',
-  Entertainment:    '#f43f5e',
-  Shopping:         '#f59e0b',
-  Education:        '#10b981',
-  Health:           '#ec4899',
-  Housing:          '#8b5cf6',
-  // AI agent (categorize_agent.py)
-  Transportation:   '#22d3ee',   // same hue as Transport
-  'Eat Out':        '#818cf8',
-  Groceries:        '#a78bfa',
-  'Bills & Utilities': '#8b5cf6',
-  Healthcare:       '#ec4899',
-  'Personal Care':  '#14b8a6',
-  Other:            '#94a3b8',
+  Groceries:          '#6366f1',
+  'Eating Out':       '#f97316',
+  Transport:          '#06b6d4',
+  Entertainment:      '#f43f5e',
+  Shopping:           '#f59e0b',
+  Education:          '#10b981',
+  'Bills & Utilities':'#8b5cf6',
+  Healthcare:         '#ec4899',
+  'Personal Care':    '#14b8a6',
+  Other:              '#94a3b8',
 };
 
 function buildChartData(transactions) {

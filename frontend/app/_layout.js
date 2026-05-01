@@ -107,6 +107,8 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="add-expense" />
       <Stack.Screen name="budget" />
+      <Stack.Screen name="reports" />
+      <Stack.Screen name="delete-account" />
     </Stack>
   );
 }

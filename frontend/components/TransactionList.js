@@ -2,13 +2,16 @@ import { FlatList, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const CATEGORY_CONFIG = {
-  Food: { icon: 'fast-food-outline', color: '#6366f1', bg: '#eef2ff' },
-  Transport: { icon: 'car-outline', color: '#06b6d4', bg: '#ecfeff' },
-  Entertainment: { icon: 'musical-notes-outline', color: '#f43f5e', bg: '#fff1f2' },
-  Shopping: { icon: 'bag-outline', color: '#f59e0b', bg: '#fffbeb' },
-  Education: { icon: 'book-outline', color: '#10b981', bg: '#ecfdf5' },
-  Health: { icon: 'heart-outline', color: '#ec4899', bg: '#fdf2f8' },
-  Other: { icon: 'ellipsis-horizontal-outline', color: '#94a3b8', bg: '#f8fafc' },
+  Groceries:          { icon: 'cart-outline',                color: '#6366f1', bg: '#eef2ff' },
+  'Eating Out':       { icon: 'restaurant-outline',          color: '#f97316', bg: '#fff7ed' },
+  Transport:          { icon: 'car-outline',                 color: '#06b6d4', bg: '#ecfeff' },
+  Entertainment:      { icon: 'musical-notes-outline',       color: '#f43f5e', bg: '#fff1f2' },
+  Shopping:           { icon: 'bag-outline',                 color: '#f59e0b', bg: '#fffbeb' },
+  Education:          { icon: 'book-outline',                color: '#10b981', bg: '#ecfdf5' },
+  'Bills & Utilities':{ icon: 'home-outline',                color: '#8b5cf6', bg: '#f5f3ff' },
+  Healthcare:         { icon: 'heart-outline',               color: '#ec4899', bg: '#fdf2f8' },
+  'Personal Care':    { icon: 'person-outline',              color: '#14b8a6', bg: '#f0fdfa' },
+  Other:              { icon: 'ellipsis-horizontal-outline', color: '#94a3b8', bg: '#f8fafc' },
 };
 
 // NOTE: SAMPLE_TRANSACTIONS removed — showing fake data for new users

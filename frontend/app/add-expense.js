@@ -25,14 +25,16 @@ const TOGGLE_SHADOW = {
 };
 
 const CATEGORIES = [
-  { label: 'Food', icon: 'fast-food-outline', color: '#6366f1', bg: '#eef2ff' },
-  { label: 'Transport', icon: 'car-outline', color: '#06b6d4', bg: '#ecfeff' },
-  { label: 'Entertainment', icon: 'musical-notes-outline', color: '#f43f5e', bg: '#fff1f2' },
-  { label: 'Shopping', icon: 'bag-outline', color: '#f59e0b', bg: '#fffbeb' },
-  { label: 'Education', icon: 'book-outline', color: '#10b981', bg: '#ecfdf5' },
-  { label: 'Health', icon: 'heart-outline', color: '#ec4899', bg: '#fdf2f8' },
-  { label: 'Housing', icon: 'home-outline', color: '#8b5cf6', bg: '#f5f3ff' },
-  { label: 'Other', icon: 'ellipsis-horizontal-outline', color: '#94a3b8', bg: '#f8fafc' },
+  { label: 'Groceries',          icon: 'cart-outline',                color: '#6366f1', bg: '#eef2ff' },
+  { label: 'Eating Out',         icon: 'restaurant-outline',          color: '#f97316', bg: '#fff7ed' },
+  { label: 'Transport',          icon: 'car-outline',                 color: '#06b6d4', bg: '#ecfeff' },
+  { label: 'Entertainment',      icon: 'musical-notes-outline',       color: '#f43f5e', bg: '#fff1f2' },
+  { label: 'Shopping',           icon: 'bag-outline',                 color: '#f59e0b', bg: '#fffbeb' },
+  { label: 'Education',          icon: 'book-outline',                color: '#10b981', bg: '#ecfdf5' },
+  { label: 'Bills & Utilities',  icon: 'home-outline',                color: '#8b5cf6', bg: '#f5f3ff' },
+  { label: 'Healthcare',         icon: 'heart-outline',               color: '#ec4899', bg: '#fdf2f8' },
+  { label: 'Personal Care',      icon: 'person-outline',              color: '#14b8a6', bg: '#f0fdfa' },
+  { label: 'Other',              icon: 'ellipsis-horizontal-outline', color: '#94a3b8', bg: '#f8fafc' },
 ];
 
 export default function AddExpense() {

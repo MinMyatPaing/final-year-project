@@ -20,25 +20,31 @@ const BUDGET_LIMITS_KEY   = 'pocketwise_limits';
 const NOTIF_SENT_KEY      = 'pocketwise_notifs_sent';
 
 const DEFAULT_LIMITS = {
-  'Food & Dining':   150,
-  Transport:          60,
-  Entertainment:      40,
-  Shopping:           80,
-  Education:          50,
-  'Housing & Bills': 500,
-  Healthcare:         30,
-  'Personal Care':    30,
+  Groceries:           150,
+  'Eating Out':         80,
+  Transport:            60,
+  Entertainment:        40,
+  Shopping:             80,
+  Education:            50,
+  'Bills & Utilities': 500,
+  Healthcare:           30,
+  'Personal Care':      30,
+  Other:                50,
 };
 
+// Aliases kept for backwards-compatibility with any transactions stored
+// before the category rename (e.g. 'food' → 'Groceries', 'housing' → 'Bills & Utilities').
 const CATEGORY_ALIASES = [
-  { label: 'Food & Dining',   aliases: ['food', 'groceries', 'eat out', 'eating out'] },
-  { label: 'Transport',       aliases: ['transport', 'transportation'] },
-  { label: 'Entertainment',   aliases: ['entertainment'] },
-  { label: 'Shopping',        aliases: ['shopping'] },
-  { label: 'Education',       aliases: ['education'] },
-  { label: 'Housing & Bills', aliases: ['housing', 'bills & utilities', 'bills', 'utilities'] },
-  { label: 'Healthcare',      aliases: ['health', 'healthcare'] },
-  { label: 'Personal Care',   aliases: ['personal care'] },
+  { label: 'Groceries',        aliases: ['groceries', 'food'] },
+  { label: 'Eating Out',       aliases: ['eating out', 'eat out'] },
+  { label: 'Transport',        aliases: ['transport', 'transportation'] },
+  { label: 'Entertainment',    aliases: ['entertainment'] },
+  { label: 'Shopping',         aliases: ['shopping'] },
+  { label: 'Education',        aliases: ['education'] },
+  { label: 'Bills & Utilities',aliases: ['bills & utilities', 'housing', 'bills', 'utilities'] },
+  { label: 'Healthcare',       aliases: ['healthcare', 'health'] },
+  { label: 'Personal Care',    aliases: ['personal care'] },
+  { label: 'Other',            aliases: ['other'] },
 ];
 
 function matchCategory(txnCategory) {
